@@ -2,7 +2,8 @@ const express = require('express');
 const { Telegraf } = require('telegraf');
 const path = require('path');
 
-// Берем токен из переменных окружения Railway. На платформе нужно будет создать переменную BOT_TOKEN
+// 1. НАСТРОЙКА ТОКЕНА И БОТА
+// Берем токен из переменных окружения Railway (вкладка Variables -> BOT_TOKEN)
 const BOT_TOKEN = process.env.BOT_TOKEN; 
 
 if (!BOT_TOKEN) {
@@ -15,29 +16,28 @@ const app = express();
 
 app.use(express.json());
 
-// Разрешаем фронтенду делать запросы к бэкенду (CORS-политика)
+// 2. CORS-ПОЛИТИКА (Разрешаем запросы от Мини Апп к серверу)
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();
 });
 
-// Раздаем файл index.html прямо с этого же сервера
+// 3. РАЗДАЧА ИНТЕРФЕЙСА (Отдаем index.html при переходе по ссылке домена)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // ==========================================
-// 1. ЛОГИКА ДЛЯ ТЕЛЕГРАМ БОТА
+// 4. ЛОГИКА ДЛЯ ТЕЛЕГРАМ БОТА (TeleLoot)
 // ==========================================
 
-// При старте бота выдаем кнопку, которая открывает наш сайт на Railway
+// Команда /start выдает кнопку открытия приложения
 bot.start((ctx) => {
-  // Railway автоматически выдает домен, если вы создали его в настройках (Generate Domain)
-  // Мы можем использовать его или вы можете заменить MINI_APP_URL на ссылку от Vercel
+  // Railway сам подставит домен в переменную RAILWAY_PUBLIC_DOMAIN, если он включен в Settings
   const appUrl = process.env.RAILWAY_PUBLIC_DOMAIN 
     ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` 
-    : 'УКАЖИТЕ_СВОЮ_ССЫЛКУ_ЕСЛИ_ЭКРАН_ОТДЕЛЬНО';
+    : 'https://railway.app'; // Можете вписать сюда ваш домен руками, если переменная не сработает
 
   ctx.reply('Привет! Готов испытать удачу в кейсе "Теллс"? 🎁', {
     reply_markup: {
@@ -48,18 +48,19 @@ bot.start((ctx) => {
   });
 });
 
-// Проверка перед списанием Звёзд (Телеграм запрашивает одобрение транзакции)
+// Обязательное одобрение транзакции перед списанием Звёзд Телеграм
 bot.on('pre_checkout_query', async (ctx) => {
   await ctx.answerPreCheckoutQuery(true);
 });
 
-// Успешная оплата
+// Уведомление в консоль при успешной оплате от пользователя
 bot.on('successful_payment', (ctx) => {
-  console.log(`🎉 Пользователь ${ctx.from.id} успешно открыл кейс за Звёзды!`);
+  const paymentInfo = ctx.message.successful_payment;
+  console.log(`🎉 Пользователь ${ctx.from.id} успешно оплатил ${paymentInfo.total_amount} Звёзд!`);
 });
 
 // ==========================================
-// 2. API ЭНДПОИНТ ДЛЯ МИНИ-ПРИЛОЖЕНИЯ
+// 5. API ЭНДПОИНТ ДЛЯ ОПЛАТЫ КЕЙСА
 // ==========================================
 
 app.post('/create-invoice', async (req, res) => {
@@ -70,16 +71,17 @@ app.post('/create-invoice', async (req, res) => {
       return res.status(400).json({ error: 'Не указан ID пользователя' });
     }
 
-    // Генерируем ссылку на оплату 99 Telegram Stars (код XTR)
+    // Создаем счет на оплату 99 Звёзд Telegram (международный код валюты — XTR)
     const invoiceLink = await bot.telegram.createInvoiceLink({
       title: "Кейс Теллс",
       description: "Оплата 99 Звёзд за открытие кейса с NFT-подарком Telegram",
       payload: `tells_case_${userId}_${Date.now()}`,
-      provider_token: "", // Для Stars оставляем пустым!
-      currency: "XTR",     // Международный код Telegram Stars
+      provider_token: "", // Для Telegram Stars оставляем строго ПУСТЫМ!
+      currency: "XTR",     // Код Звёзд
       prices: [{ label: "Кейс Теллс", amount: 99 }]
     });
 
+    // Отдаем ссылку на оплату обратно в Mini App
     res.json({ invoiceLink });
 
   } catch (error) {
@@ -88,15 +90,20 @@ app.post('/create-invoice', async (req, res) => {
   }
 });
 
-// Запуск сервера на порту, который автоматически выдаст Railway
+// ==========================================
+// 6. ЗАПУСК СЕРВЕРА С ПРАВИЛЬНЫМИ НАСТРОЙКАМИ ДЛЯ СЕТИ
+// ==========================================
+
 const PORT = process.env.PORT || 3000;
-// Добавляем '0.0.0.0', чтобы Railway смог перенаправлять трафик внутрь программы
+
+// Указываем '0.0.0.0', чтобы Railway смог пропустить внешний интернет-трафик к коду
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🌐 Сервер TeleLoot успешно запущен на порту ${PORT} и хосте 0.0.0.0`);
 });
 
-bot.launch().then(() => console.log('🤖 Бот успешно запущен!'));
+// Включаем чтение сообщений бота
+bot.launch().then(() => console.log('🤖 Бот TeleLoot успешно запущен!'));
 
-// Безопасное выключение
+// Корректная остановка сервера при обновлениях в Railway
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
