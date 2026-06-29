@@ -25,7 +25,7 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* Главное окно рулетки */
+    /* Окно рулетки */
     .roulette-wrapper {
       position: relative;
       width: 100%;
@@ -68,15 +68,13 @@
       left: 0;
       top: 0;
       height: 100%;
-      /* Плавный запуск трансформации через JS */
-      transition: transform 0s ease; 
     }
 
     /* Карточка с подарком */
     .gift-card {
       width: 120px;
       height: 120px;
-      margin: 0 10px; /* Отступы по 10px слева и справа. Итого ширина карточки с отступами = 140px */
+      margin: 0 10px; /* Итого ширина карточки с отступами = 140px */
       background: radial-gradient(circle, #334155 0%, #1e293b 100%);
       border: 1px solid #475569;
       border-radius: 16px;
@@ -88,8 +86,8 @@
     }
 
     .gift-card img {
-      width: 75%;
-      height: 75%;
+      width: 85%;
+      height: 85%;
       object-fit: contain;
     }
 
@@ -121,7 +119,6 @@
       cursor: not-allowed;
     }
 
-    /* Анимация пульсации для выигранного подарка */
     @keyframes winPulse {
       0% { transform: scale(1); filter: drop-shadow(0 0 5px #38bdf8); }
       100% { transform: scale(1.08); filter: drop-shadow(0 0 20px #38bdf8); }
@@ -139,7 +136,7 @@
   <div class="roulette-wrapper">
     <div class="roulette-marker"></div>
     <div id="rouletteTape" class="roulette-tape">
-      <!-- Изначально показываем логотип закрытого кейса по центру -->
+      <!-- Коробка сюрприза на старте -->
     </div>
   </div>
   
@@ -151,24 +148,17 @@
     tg.ready();
     tg.expand();
 
-    // Официальные открытые логотипы подарков и фишек от Telegram (открыты для всех сайтов)
-    const telegramGifts = [
-      "https://telegram.org",
-      "https://telegram.org",
-      "https://telegram.org",
-      "https://telegram.org"
-    ];
+    const serverUrl = window.location.origin;
+
+    // Имена официальных подарков в системе Fragment
+    const giftNames = ["plushpepe", "durovscap", "jellybunny", "magichat", "homemadecake", "spicedwine"];
 
     const tape = document.getElementById('rouletteTape');
-    
-    // Точная ширина карточки (120px сама карточка + 10px левый отступ + 10px правый отступ = 140px)
     const CARD_FULL_WIDTH = 140; 
 
-    // Стартовый экран: коробка подарка по центру
     function initCase() {
       tape.style.transition = 'none';
       tape.style.transform = 'translateX(0px)';
-      // Смещение влево, чтобы единственная карточка встала ровно по центру окна (340px)
       tape.innerHTML = `
         <div class="gift-card" style="margin-left: 110px;">
           <img src="https://telegram.org" alt="Кейс">
@@ -179,7 +169,6 @@
 
     function startPurchase() {
       document.getElementById('spinBtn').disabled = true;
-      const serverUrl = window.location.origin;
 
       fetch(`${serverUrl}/create-invoice`, {
         method: 'POST',
@@ -192,13 +181,13 @@
           if (status === 'paid') {
             generateAndSpin();
           } else {
-            alert('Оплата не удалась');
+            alert('Оплата отменена');
             document.getElementById('spinBtn').disabled = false;
           }
         });
       })
       .catch(() => {
-        // ДЕМО-РЕЖИМ (Сработает, если открыть просто в браузере без оплаты)
+        // ДЕМО-РЕЖИМ (Сработает при тесте без оплаты)
         generateAndSpin();
       });
     }
@@ -208,55 +197,63 @@
       tape.style.transition = 'none'; 
       tape.style.transform = 'translateX(0px)';
 
-      const totalCards = 30; // Всего карточек в ленте
-      const winningIndex = 24; // 25-я карточка выиграет и встанет в центре
-      let winningGiftUrl = '';
+      const totalCards = 30; 
+      const winningIndex = 24; 
+      let winningGiftName = '';
       
-      // Собираем ленту
       for (let i = 0; i < totalCards; i++) {
-        const randomGift = telegramGifts[Math.floor(Math.random() * telegramGifts.length)];
+        const randomName = giftNames[Math.floor(Math.random() * giftNames.length)];
         
         const card = document.createElement('div');
         card.className = 'gift-card';
         card.id = `card-${i}`;
         
         const img = document.createElement('img');
-        img.src = randomGift;
+        // Запрашиваем картинку через наш собственный рабочий прокси-сервер Railway
+        img.src = `${serverUrl}/proxy-gift?name=${randomName}`;
         
         card.appendChild(img);
         tape.appendChild(card);
 
         if (i === winningIndex) {
-          winningGiftUrl = randomGift;
+          winningGiftName = randomName;
         }
       }
 
-      // МАТЕМАТИЧЕСКИЙ РАСЧЕТ ОСТАНОВКИ:
-      // Окно рулетки = 340px. Центр окна = 170px.
-      // Ширина одной карточки = 120px. Ее центр = 60px.
-      // Чтобы карточка встала центром на отметку 170px, нужно сместить ленту с учетом отступов.
       const wrapperWidth = 340;
-      const centerOffset = (wrapperWidth / 2) - (140 / 2);
-      const stopX = -(winningIndex * CARD_FULL_WIDTH) + centerOffset + 10; // +10 компенсирует крайний margin
+      const centerOffset = (wrapperWidth / 2) - (CARD_FULL_WIDTH / 2);
+      const stopX = -(winningIndex * CARD_FULL_WIDTH) + centerOffset;
 
-      // Запуск плавной прокрутки
+      // Принудительно заставляем браузер просчитать ленту перед запуском
+      tape.offsetHeight;
+
       setTimeout(() => {
-        // Эффект казино: резкий старт и очень плавное торможение в конце
-        tape.style.transition = 'transform 4.5s cubic-bezier(0.1, 0.8, 0.15, 1)';
+        // Плавная прокрутка: резкий старт и красивое торможение казино
+        tape.style.transition = 'transform 4.5s cubic-bezier(0.1, 0.4, 0.1, 1)';
         tape.style.transform = `translateX(${stopX}px)`;
-      }, 50);
+      }, 100);
 
-      // Конец прокрутки: подсвечиваем победителя
+      // Остановка и фиксация победителя
       setTimeout(() => {
         const winnerCard = document.getElementById(`card-${winningIndex}`);
         if(winnerCard) winnerCard.classList.add('winner-anim');
 
-        document.getElementById('priceText').innerHTML = "🎉 Вы получили NFT-подарок! 🎉";
+        // Переводим техническое название подарка на красивый русский язык
+        const prettyNames = {
+          plushpepe: "Plush Pepe 🐸",
+          durovscap: "Durov's Cap 👑",
+          jellybunny: "Jelly Bunny 🐰",
+          magichat: "Magic Hat 🎩",
+          homemadecake: "Homemade Cake 🍰",
+          spicedwine: "Spiced Wine 🍷"
+        };
+
+        document.getElementById('priceText').innerHTML = `🎉 Вы выиграли: ${prettyNames[winningGiftName] || winningGiftName}! 🎉`;
         document.getElementById('spinBtn').innerText = "Забрать лут";
         document.getElementById('spinBtn').disabled = false;
         
         document.getElementById('spinBtn').onclick = function() {
-          tg.close(); // Закрываем Mini App
+          tg.close();
         };
       }, 4600);
     }
