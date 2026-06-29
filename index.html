@@ -127,52 +127,57 @@
       { name: "Scared Cat", url: "RVFBVHVVR2R2cmpMdlRXRTVwcFZGT1ZDcVUyZGxDTFVuS1RzdTBuMUpZbTlsYTEw.webp" },
     ];
 
-    function startPurchase() {
-      const btn = document.getElementById('spinBtn');
-      btn.disabled = true;
-      btn.innerText = "Загрузка...";
+function startPurchase() {
+  const btn = document.getElementById('spinBtn');
+  btn.disabled = true;
+  btn.innerText = "Загрузка...";
 
-      // Безопасно вытаскиваем ID пользователя
-      let userId = 777;
-      if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        userId = tg.initDataUnsafe.user.id;
-      }
+  // 1. ЖЕСТКО УКАЗЫВАЕМ АДРЕС ТВОЕГО СЕРВЕРА RAILWAY (без автоопределения!)
+  const REAL_SERVER_URL = "https://lol-production-6958.up.railway.app"; 
 
-      const serverUrl = window.location.origin;
+  let userId = 777;
+  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+    userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+  }
 
-      // Делаем запрос на создание счета для оплаты
-      fetch(`${serverUrl}/create-invoice`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: userId })
-      })
-      .then(res => {
-        if (!res.ok) throw new Error("Сервер вернул ошибку");
-        return res.json();
-      })
-      .then(data => {
-        btn.innerText = "Оплата...";
-        
-        // Если открыто в Телеграме и есть платежная ссылка — открываем счет
-        if (tg && data.invoiceLink) {
-          tg.openInvoice(data.invoiceLink, function(status) {
-            if (status === 'paid') {
-              startEpicOpening(); // Успешно оплачено
-            } else {
-              alert('Оплата отменена');
-              resetBtn();
-            }
-          });
-        } else {
-          // Если открыли в обычном браузере, просто крутим демо
-          startEpicOpening();
-        }
-      })
-      .catch((err) => {
-        console.log("Бэкенд недоступен, включаем тест анимации");
+  // 2. Делаем точный запрос к серверу
+  fetch(`${REAL_SERVER_URL}/create-invoice`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: userId })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error("Ошибка сервера");
+    return res.json();
+  })
+  .then(data => {
+    btn.innerText = "Оплата...";
+    
+    // Если платеж не сработал или это аккаунт админа — ловим ошибку и крутим демо!
+    try {
+      if (window.Telegram && window.Telegram.WebApp && data.invoiceLink) {
+        window.Telegram.WebApp.openInvoice(data.invoiceLink, function(status) {
+          if (status === 'paid') {
+            startEpicOpening(); // Успешная оплата
+          } else {
+            alert('Оплата отменена');
+            resetBtn();
+          }
+        });
+      } else {
         startEpicOpening();
-      });
+      }
+    } catch(e) {
+      console.log("Включаем демо-открытие");
+      startEpicOpening();
     }
+  })
+  .catch((err) => {
+    console.log("Подстраховка: запускаем анимацию");
+    startEpicOpening();
+  });
+}
+
 
     function startEpicOpening() {
       // 1. Включаем вращение коробки кейса
