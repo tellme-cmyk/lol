@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Кейс Теллс — Telegram Gifts</title>
+  <script src="https://telegram.org"></script>
+  <style>
+    body {
+      background: #101721;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+    .case-container {
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .case-display {
+      width: 200px;
+      height: 200px;
+      border-radius: 24px;
+      background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #24a1de;
+      box-shadow: 0 0 25px rgba(36, 161, 222, 0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .case-display img {
+      width: 85%;
+      height: 85%;
+      object-fit: contain;
+    }
+    .price-tag {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .star-icon {
+      color: #ffb300;
+      text-shadow: 0 0 10px rgba(255, 179, 0, 0.4);
+    }
+    .btn-buy {
+      background: #24a1de;
+      color: white;
+      border: none;
+      padding: 14px 40px;
+      font-size: 18px;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: 600;
+      width: 80%;
+      max-width: 280px;
+      box-shadow: 0 4px 15px rgba(36, 161, 222, 0.3);
+      transition: all 0.2s ease;
+    }
+    .btn-buy:disabled {
+      background: #2d3748;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+    .roulette-line {
+      display: flex;
+      position: absolute;
+      left: 0;
+      width: auto;
+    }
+    .roulette-item {
+      width: 200px;
+      height: 200px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .roulette-item img {
+      width: 80%;
+      height: 80%;
+      object-fit: contain;
+    }
+    @keyframes spin {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-3000px); }
+    }
+    .spinning {
+      animation: spin 4s cubic-bezier(0.1, 0.8, 0.13, 1) forwards;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="case-container">
+    <div id="caseDisplay" class="case-display">
+      <!-- Логотип закрытого кейса -->
+      <img id="caseImg" src="https://telegram.org" alt="Кейс Теллс">
+    </div>
+    
+    <div id="priceText" class="price-tag"><span class="star-icon">⭐️</span> 99 Звёзд</div>
+    <button id="buyBtn" class="btn-buy" onclick="startPurchase()">Открыть кейс</button>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    // Официальные превью NFT-подарков с Fragment
+    const telegramGifts = [
+      "https://fragment.com",
+      "https://fragment.com",
+      "https://fragment.com",
+      "https://fragment.com",
+      "https://fragment.com",
+      "https://fragment.com"
+    ];
+
+    function startPurchase() {
+      document.getElementById('buyBtn').disabled = true;
+      
+      // Автоматически определяем текущий адрес сервера (работает и на localhost, и на Railway)
+      const serverUrl = window.location.origin;
+
+      fetch(`${serverUrl}/create-invoice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: tg.initDataUnsafe.user?.id || 0 })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Ошибка сервера');
+        return res.json();
+      })
+      .then(data => {
+        // Открытие платежного окна Telegram Stars
+        tg.openInvoice(data.invoiceLink, function(status) {
+          if (status === 'paid') {
+            triggerGiftRoulette();
+          } else {
+            alert('Оплата отменена или отклонена');
+            document.getElementById('buyBtn').disabled = false;
+          }
+        });
+      })
+      .catch((err) => {
+        alert('Не удалось связаться с сервером. Запускаем демо-режим анимации.');
+        triggerGiftRoulette();
+      });
+    }
+
+    function triggerGiftRoulette() {
+      const display = document.getElementById('caseDisplay');
+      display.innerHTML = '';
+      
+      const line = document.createElement('div');
+      line.className = 'roulette-line';
+      
+      const totalItems = 20;
+      let winningGiftUrl = '';
+      
+      for(let i = 0; i < totalItems; i++) {
+        const randomGift = telegramGifts[i % telegramGifts.length];
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'roulette-item';
+        
+        const img = document.createElement('img');
+        img.src = randomGift;
+        
+        itemDiv.appendChild(img);
+        line.appendChild(itemDiv);
+        
+        if (i === 15) {
+          winningGiftUrl = randomGift; // 16-й элемент побеждает
+        }
+      }
+      
+      display.appendChild(line);
+      
+      setTimeout(() => {
+        line.classList.add('spinning');
+      }, 50);
+
+      // Ждем окончания прокрутки (4 секунды)
+      setTimeout(() => {
+        display.innerHTML = `<img src="${winningGiftUrl}" alt="Выигрыш">`;
+        document.getElementById('priceText').innerHTML = "✨ Вы выиграли NFT-подарок! ✨";
+        document.getElementById('buyBtn').innerText = "Закрыть";
+        document.getElementById('buyBtn').disabled = false;
+        
+        document.getElementById('buyBtn').onclick = function() {
+          tg.close();
+        };
+      }, 4050);
+    }
+  </script>
+</body>
+</html>
