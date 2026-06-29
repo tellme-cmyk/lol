@@ -90,8 +90,9 @@ app.post('/create-invoice', async (req, res) => {
 
 // Запуск сервера на порту, который автоматически выдаст Railway
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🌐 Сервер запущен на порту ${PORT}`);
+// Добавляем '0.0.0.0', чтобы Railway смог перенаправлять трафик внутрь программы
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🌐 Сервер TeleLoot успешно запущен на порту ${PORT} и хосте 0.0.0.0`);
 });
 
 bot.launch().then(() => console.log('🤖 Бот успешно запущен!'));
