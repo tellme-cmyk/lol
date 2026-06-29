@@ -24,7 +24,6 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* Окно отображения подарка */
     .roulette-wrapper {
       position: relative;
       width: 180px;
@@ -47,7 +46,7 @@
       transition: all 0.3s ease;
     }
 
-    /* Бешеное размытое вращение кейса при открытии */
+    /* Анимация быстрого вращения */
     @keyframes fastSpin {
       0% { transform: rotate(0deg) scale(1); filter: blur(0px); }
       50% { transform: rotate(180deg) scale(0.8); filter: blur(3px); }
@@ -57,7 +56,7 @@
       animation: fastSpin 0.4s infinite linear;
     }
 
-    /* Взрывной эффект появления выигранного NFT */
+    /* Анимация победного взрыва */
     @keyframes winEpic {
       0% { transform: scale(0) rotate(-45deg); opacity: 0; }
       70% { transform: scale(1.2) rotate(10deg); opacity: 1; }
@@ -101,22 +100,25 @@
   <div class="case-title">КЕЙС ТЕЛЛС</div>
 
   <div class="roulette-wrapper">
-    <!-- !!! ЗАМЕНИТЕ ЭТУ ССЫЛКУ НА ВАШУ КАРТИНКУ ЗАКРЫТОГО КЕЙСА !!! -->
-    <img id="giftImg" class="gift-display" src="https://i.ibb.co/KcCkPvqq.jpg" alt="Кейс">
+    <!-- Имя файла кейса (сервер прочитает его в любом регистре, например CASE.WEBP) -->
+    <img id="giftImg" class="gift-display" src="case.webp" alt="Кейс">
   </div>
   
   <div id="priceText" class="price-tag">⭐️ 99 Звёзд</div>
   <button id="spinBtn" class="btn-spin" onclick="startPurchase()">Открыть кейс</button>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
+    // Проверяем, что скрипт Телеграма инициализировался
+    let tg = null;
+    if (window.Telegram && window.Telegram.WebApp) {
+      tg = window.Telegram.WebApp;
+      tg.ready();
+      tg.expand();
+    }
 
-    const serverUrl = window.location.origin;
     const imgElement = document.getElementById('giftImg');
 
-    // === ВСТАВЬТЕ СЮДА ВАШИ ПРЯМЫЕ ССЫЛКИ НА NFT-ПОДАРКИ С ХОСТИНГА ===
+    // Названия ваших .webp картинок подарков (сервер сам найдет их, даже если они написаны большими буквами)
     const gifts = [
       { name: "Artisan Brick", url: "RVFBMlJJN1h2SXM5d0pRS3J4a1RiN1l0cGVVdWFELXAwZVQ1dUJlNGJrY0dUMmJk.webp" },
       { name: "Precious Peach", url: "RVFBNGk1OGl1UzlEVVlSdFVaOTdzWm81bW5rYmlZVUJwV1hRT2UzZEVVQ2NQMVc4.webp" },
@@ -126,41 +128,63 @@
     ];
 
     function startPurchase() {
-      document.getElementById('spinBtn').disabled = true;
+      const btn = document.getElementById('spinBtn');
+      btn.disabled = true;
+      btn.innerText = "Загрузка...";
 
+      // Безопасно вытаскиваем ID пользователя
+      let userId = 777;
+      if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        userId = tg.initDataUnsafe.user.id;
+      }
+
+      const serverUrl = window.location.origin;
+
+      // Делаем запрос на создание счета для оплаты
       fetch(`${serverUrl}/create-invoice`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: tg.initDataUnsafe.user?.id || 0 })
+        body: JSON.stringify({ userId: userId })
       })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Сервер вернул ошибку");
+        return res.json();
+      })
       .then(data => {
-        tg.openInvoice(data.invoiceLink, function(status) {
-          if (status === 'paid') {
-            startEpicOpening();
-          } else {
-            alert('Оплата отменена');
-            document.getElementById('spinBtn').disabled = false;
-          }
-        });
+        btn.innerText = "Оплата...";
+        
+        // Если открыто в Телеграме и есть платежная ссылка — открываем счет
+        if (tg && data.invoiceLink) {
+          tg.openInvoice(data.invoiceLink, function(status) {
+            if (status === 'paid') {
+              startEpicOpening(); // Успешно оплачено
+            } else {
+              alert('Оплата отменена');
+              resetBtn();
+            }
+          });
+        } else {
+          // Если открыли в обычном браузере, просто крутим демо
+          startEpicOpening();
+        }
       })
-      .catch(() => {
-        // ДЕМО-РЕЖИМ (Если бэкэнд недоступен или вы тестируете в обычном браузере)
+      .catch((err) => {
+        console.log("Бэкенд недоступен, включаем тест анимации");
         startEpicOpening();
       });
     }
 
     function startEpicOpening() {
-      // 1. Запускаем бешеное вращение коробки
+      // 1. Включаем вращение коробки кейса
       imgElement.className = "gift-display spinning-fast";
       document.getElementById('priceText').innerHTML = "⚡️ Кейс открывается... ⚡️";
 
-      // 2. Через 2.5 секунды резко останавливаем и показываем выигранный NFT-подарок
+      // 2. Через 2.5 секунды останавливаем крутилку и взрывным эффектом показываем NFT-подарок
       setTimeout(() => {
         const winner = gifts[Math.floor(Math.random() * gifts.length)];
         
         imgElement.className = "gift-display"; 
-        imgElement.src = winner.url; // Ставим картинку выигранного подарка с вашего хостинга
+        imgElement.src = winner.url; // Меняем на картинку подарка
         
         setTimeout(() => {
           imgElement.className = "gift-display win-effect";
@@ -170,11 +194,18 @@
           btn.innerText = "Забрать лут";
           btn.disabled = false;
           btn.onclick = function() {
-            tg.close();
+            if (tg) tg.close();
           };
         }, 50);
 
       }, 2500);
+    }
+
+    function resetBtn() {
+      const btn = document.getElementById('spinBtn');
+      btn.disabled = false;
+      btn.innerText = "Открыть кейс";
+      document.getElementById('priceText').innerHTML = "⭐️ 99 Звёзд";
     }
   </script>
 </body>
