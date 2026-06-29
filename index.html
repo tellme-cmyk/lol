@@ -3,76 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TeleLoot — Кейсы</title>
-  <script src="https://telegram.org"></script>
+  <title>TeleLoot</title>
   <style>
     body {
       background: #0f172a;
       color: #ffffff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-family: sans-serif;
       text-align: center;
-      margin: 0;
       padding: 20px;
     }
-
-    .case-title {
-      font-size: 26px;
-      font-weight: 800;
-      margin-top: 20px;
-      background: linear-gradient(45deg, #38bdf8, #3b82f6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
     .roulette-wrapper {
       position: relative;
       width: 180px;
       height: 180px;
-      margin: 40px auto 20px auto;
-      background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+      margin: 40px auto;
+      background: #1e293b;
       border: 3px solid #3b82f6;
       border-radius: 24px;
-      box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
       display: flex;
       justify-content: center;
       align-items: center;
       overflow: hidden;
     }
-
     .gift-display {
       width: 80%;
       height: 80%;
       object-fit: contain;
-      transition: all 0.3s ease;
     }
-
-    /* Анимация быстрого вращения */
     @keyframes fastSpin {
-      0% { transform: rotate(0deg) scale(1); filter: blur(0px); }
-      50% { transform: rotate(180deg) scale(0.8); filter: blur(3px); }
-      100% { transform: rotate(360deg) scale(1); filter: blur(0px); }
+      0% { transform: rotate(0deg); filter: blur(0px); }
+      100% { transform: rotate(360deg); filter: blur(2px); }
     }
     .spinning-fast {
-      animation: fastSpin 0.4s infinite linear;
+      animation: fastSpin 0.3s infinite linear;
     }
-
-    /* Анимация победного взрыва */
-    @keyframes winEpic {
-      0% { transform: scale(0) rotate(-45deg); opacity: 0; }
-      70% { transform: scale(1.2) rotate(10deg); opacity: 1; }
-      100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 15px #38bdf8); }
-    }
-    .win-effect {
-      animation: winEpic 0.6s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
     .price-tag {
       font-size: 24px;
-      font-weight: 700;
+      font-weight: bold;
       margin-bottom: 25px;
       color: #f59e0b;
     }
-
     .btn-spin {
       background: #2563eb;
       color: white;
@@ -81,44 +51,25 @@
       font-size: 18px;
       border-radius: 16px;
       cursor: pointer;
-      font-weight: 700;
+      font-weight: bold;
       width: 85%;
-      max-width: 300px;
-      box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
-      transition: all 0.3s ease;
-    }
-
-    .btn-spin:disabled {
-      background: #475569;
-      box-shadow: none;
-      cursor: not-allowed;
     }
   </style>
 </head>
 <body>
 
-  <div class="case-title">КЕЙС ТЕЛЛС</div>
+  <h1>КЕЙС ТЕЛЛС</h1>
 
   <div class="roulette-wrapper">
-    <!-- Имя файла кейса (сервер прочитает его в любом регистре, например CASE.WEBP) -->
+    <!-- Главный логотип кейса (большие буквы в названии файла сервер прочитает без проблем) -->
     <img id="giftImg" class="gift-display" src="case.webp" alt="Кейс">
   </div>
   
   <div id="priceText" class="price-tag">⭐️ 99 Звёзд</div>
-  <button id="spinBtn" class="btn-spin" onclick="startPurchase()">Открыть кейс</button>
+  <button id="spinBtn" class="btn-spin" onclick="startOpening()">Открыть кейс</button>
 
   <script>
-    // Проверяем, что скрипт Телеграма инициализировался
-    let tg = null;
-    if (window.Telegram && window.Telegram.WebApp) {
-      tg = window.Telegram.WebApp;
-      tg.ready();
-      tg.expand();
-    }
-
-    const imgElement = document.getElementById('giftImg');
-
-    // Названия ваших .webp картинок подарков (сервер сам найдет их, даже если они написаны большими буквами)
+    // Список ваших .webp подарков (пишем обычными маленькими буквами)
     const gifts = [
       { name: "Artisan Brick", url: "RVFBMlJJN1h2SXM5d0pRS3J4a1RiN1l0cGVVdWFELXAwZVQ1dUJlNGJrY0dUMmJk.webp" },
       { name: "Precious Peach", url: "RVFBNGk1OGl1UzlEVVlSdFVaOTdzWm81bW5rYmlZVUJwV1hRT2UzZEVVQ2NQMVc4.webp" },
@@ -127,90 +78,28 @@
       { name: "Scared Cat", url: "RVFBVHVVR2R2cmpMdlRXRTVwcFZGT1ZDcVUyZGxDTFVuS1RzdTBuMUpZbTlsYTEw.webp" },
     ];
 
-function startPurchase() {
-  const btn = document.getElementById('spinBtn');
-  btn.disabled = true;
-  btn.innerText = "Загрузка...";
 
-  // 1. ЖЕСТКО УКАЗЫВАЕМ АДРЕС ТВОЕГО СЕРВЕРА RAILWAY (без автоопределения!)
-  const REAL_SERVER_URL = "https://lol-production-6958.up.railway.app"; 
+    function startOpening() {
+      const btn = document.getElementById('spinBtn');
+      const img = document.getElementById('giftImg');
+      
+      // Блокируем кнопку и запускаем крутилку мгновенно при клике!
+      btn.disabled = true;
+      img.className = "gift-display spinning-fast";
+      document.getElementById('priceText').innerText = "⚡️ Открытие...";
 
-  let userId = 777;
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-    userId = window.Telegram.WebApp.initDataUnsafe.user.id;
-  }
-
-  // 2. Делаем точный запрос к серверу
-  fetch(`${REAL_SERVER_URL}/create-invoice`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId: userId })
-  })
-  .then(res => {
-    if (!res.ok) throw new Error("Ошибка сервера");
-    return res.json();
-  })
-  .then(data => {
-    btn.innerText = "Оплата...";
-    
-    // Если платеж не сработал или это аккаунт админа — ловим ошибку и крутим демо!
-    try {
-      if (window.Telegram && window.Telegram.WebApp && data.invoiceLink) {
-        window.Telegram.WebApp.openInvoice(data.invoiceLink, function(status) {
-          if (status === 'paid') {
-            startEpicOpening(); // Успешная оплата
-          } else {
-            alert('Оплата отменена');
-            resetBtn();
-          }
-        });
-      } else {
-        startEpicOpening();
-      }
-    } catch(e) {
-      console.log("Включаем демо-открытие");
-      startEpicOpening();
-    }
-  })
-  .catch((err) => {
-    console.log("Подстраховка: запускаем анимацию");
-    startEpicOpening();
-  });
-}
-
-
-    function startEpicOpening() {
-      // 1. Включаем вращение коробки кейса
-      imgElement.className = "gift-display spinning-fast";
-      document.getElementById('priceText').innerHTML = "⚡️ Кейс открывается... ⚡️";
-
-      // 2. Через 2.5 секунды останавливаем крутилку и взрывным эффектом показываем NFT-подарок
+      // Ровно через 2 секунды останавливаем вращение и показываем приз
       setTimeout(() => {
         const winner = gifts[Math.floor(Math.random() * gifts.length)];
         
-        imgElement.className = "gift-display"; 
-        imgElement.src = winner.url; // Меняем на картинку подарка
+        img.className = "gift-display"; 
+        img.src = winner.url; // Подставляем картинку подарка .webp из вашей папки
         
-        setTimeout(() => {
-          imgElement.className = "gift-display win-effect";
-          document.getElementById('priceText').innerHTML = `🎉 Вы выиграли: <br><b>${winner.name}</b>! 🎉`;
-          
-          const btn = document.getElementById('spinBtn');
-          btn.innerText = "Забрать лут";
-          btn.disabled = false;
-          btn.onclick = function() {
-            if (tg) tg.close();
-          };
-        }, 50);
-
-      }, 2500);
-    }
-
-    function resetBtn() {
-      const btn = document.getElementById('spinBtn');
-      btn.disabled = false;
-      btn.innerText = "Открыть кейс";
-      document.getElementById('priceText').innerHTML = "⭐️ 99 Звёзд";
+        document.getElementById('priceText').innerHTML = `🎉 Выиграно: <b>${winner.name}</b>!`;
+        btn.innerText = "Готово";
+        btn.disabled = false;
+        btn.onclick = () => { window.location.reload(); }; // Перезапуск при повторном клике
+      }, 2000);
     }
   </script>
 </body>
