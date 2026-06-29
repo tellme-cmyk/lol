@@ -13,7 +13,6 @@
       text-align: center;
       margin: 0;
       padding: 20px;
-      overflow: hidden;
     }
 
     .case-title {
@@ -25,76 +24,53 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* Окно рулетки */
+    /* Окно отображения подарка */
     .roulette-wrapper {
       position: relative;
-      width: 100%;
-      max-width: 340px;
-      height: 160px;
+      width: 180px;
+      height: 180px;
       margin: 40px auto 20px auto;
-      background: #1e293b;
-      border-radius: 20px;
-      border: 2px solid #3b82f6;
-      box-shadow: 0 0 25px rgba(59, 130, 246, 0.3);
-      overflow: hidden;
-    }
-
-    /* Синяя неоновая стрелочка-указатель по центру */
-    .roulette-marker {
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 4px;
-      height: 100%;
-      background: #38bdf8;
-      box-shadow: 0 0 15px #38bdf8;
-      z-index: 10;
-    }
-    .roulette-marker::before {
-      content: '▼';
-      position: absolute;
-      top: -2px;
-      left: -6px;
-      color: #38bdf8;
-      font-size: 14px;
-    }
-
-    /* Длинная движущаяся лента */
-    .roulette-tape {
-      display: flex;
-      align-items: center;
-      position: absolute;
-      left: 0;
-      top: 0;
-      height: 100%;
-    }
-
-    /* Карточка с подарком */
-    .gift-card {
-      width: 120px;
-      height: 120px;
-      margin: 0 10px; /* Итого ширина карточки с отступами = 140px */
-      background: radial-gradient(circle, #334155 0%, #1e293b 100%);
-      border: 1px solid #475569;
-      border-radius: 16px;
+      background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+      border: 3px solid #3b82f6;
+      border-radius: 24px;
+      box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
       display: flex;
       justify-content: center;
       align-items: center;
-      flex-shrink: 0;
-      box-sizing: border-box;
+      overflow: hidden;
     }
 
-    .gift-card img {
-      width: 85%;
-      height: 85%;
+    .gift-display {
+      width: 80%;
+      height: 80%;
       object-fit: contain;
+      transition: all 0.3s ease;
+    }
+
+    /* Бешеное размытое вращение кейса при открытии */
+    @keyframes fastSpin {
+      0% { transform: rotate(0deg) scale(1); filter: blur(0px); }
+      50% { transform: rotate(180deg) scale(0.8); filter: blur(3px); }
+      100% { transform: rotate(360deg) scale(1); filter: blur(0px); }
+    }
+    .spinning-fast {
+      animation: fastSpin 0.4s infinite linear;
+    }
+
+    /* Взрывной эффект появления выигранного NFT */
+    @keyframes winEpic {
+      0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+      70% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 15px #38bdf8); }
+    }
+    .win-effect {
+      animation: winEpic 0.6s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .price-tag {
       font-size: 24px;
       font-weight: 700;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
       color: #f59e0b;
     }
 
@@ -118,15 +94,6 @@
       box-shadow: none;
       cursor: not-allowed;
     }
-
-    @keyframes winPulse {
-      0% { transform: scale(1); filter: drop-shadow(0 0 5px #38bdf8); }
-      100% { transform: scale(1.08); filter: drop-shadow(0 0 20px #38bdf8); }
-    }
-    .winner-anim {
-      animation: winPulse 0.5s infinite alternate ease-in-out;
-      border-color: #38bdf8 !important;
-    }
   </style>
 </head>
 <body>
@@ -134,10 +101,8 @@
   <div class="case-title">КЕЙС ТЕЛЛС</div>
 
   <div class="roulette-wrapper">
-    <div class="roulette-marker"></div>
-    <div id="rouletteTape" class="roulette-tape">
-      <!-- Коробка сюрприза на старте -->
-    </div>
+    <!-- !!! ЗАМЕНИТЕ ЭТУ ССЫЛКУ НА ВАШУ КАРТИНКУ ЗАКРЫТОГО КЕЙСА !!! -->
+    <img id="giftImg" class="gift-display" src="https://ibb.co" alt="Кейс">
   </div>
   
   <div id="priceText" class="price-tag">⭐️ 99 Звёзд</div>
@@ -149,23 +114,16 @@
     tg.expand();
 
     const serverUrl = window.location.origin;
+    const imgElement = document.getElementById('giftImg');
 
-    // Имена официальных подарков в системе Fragment
-    const giftNames = ["plushpepe", "durovscap", "jellybunny", "magichat", "homemadecake", "spicedwine"];
-
-    const tape = document.getElementById('rouletteTape');
-    const CARD_FULL_WIDTH = 140; 
-
-    function initCase() {
-      tape.style.transition = 'none';
-      tape.style.transform = 'translateX(0px)';
-      tape.innerHTML = `
-        <div class="gift-card" style="margin-left: 110px;">
-          <img src="https://telegram.org" alt="Кейс">
-        </div>
-      `;
-    }
-    initCase();
+    // === ВСТАВЬТЕ СЮДА ВАШИ ПРЯМЫЕ ССЫЛКИ НА NFT-ПОДАРКИ С ХОСТИНГА ===
+    const gifts = [
+      { name: "Plush Pepe 🐸", url: "https://ibb.co" },
+      { name: "Durov's Cap 👑", url: "https://ibb.co" },
+      { name: "Jelly Bunny 🐰", url: "https://ibb.co" },
+      { name: "Magic Hat 🎩", url: "https://ibb.co" }
+      { name: "Scared Cat", url: "https://ibb.co/0VzxPBQ1" },
+    ];
 
     function startPurchase() {
       document.getElementById('spinBtn').disabled = true;
@@ -179,7 +137,7 @@
       .then(data => {
         tg.openInvoice(data.invoiceLink, function(status) {
           if (status === 'paid') {
-            generateAndSpin();
+            startEpicOpening();
           } else {
             alert('Оплата отменена');
             document.getElementById('spinBtn').disabled = false;
@@ -187,75 +145,36 @@
         });
       })
       .catch(() => {
-        // ДЕМО-РЕЖИМ (Сработает при тесте без оплаты)
-        generateAndSpin();
+        // ДЕМО-РЕЖИМ (Если бэкэнд недоступен или вы тестируете в обычном браузере)
+        startEpicOpening();
       });
     }
 
-    function generateAndSpin() {
-      tape.innerHTML = ''; 
-      tape.style.transition = 'none'; 
-      tape.style.transform = 'translateX(0px)';
+    function startEpicOpening() {
+      // 1. Запускаем бешеное вращение коробки
+      imgElement.className = "gift-display spinning-fast";
+      document.getElementById('priceText').innerHTML = "⚡️ Кейс открывается... ⚡️";
 
-      const totalCards = 30; 
-      const winningIndex = 24; 
-      let winningGiftName = '';
-      
-      for (let i = 0; i < totalCards; i++) {
-        const randomName = giftNames[Math.floor(Math.random() * giftNames.length)];
-        
-        const card = document.createElement('div');
-        card.className = 'gift-card';
-        card.id = `card-${i}`;
-        
-        const img = document.createElement('img');
-        // Запрашиваем картинку через наш собственный рабочий прокси-сервер Railway
-        img.src = `${serverUrl}/proxy-gift?name=${randomName}`;
-        
-        card.appendChild(img);
-        tape.appendChild(card);
-
-        if (i === winningIndex) {
-          winningGiftName = randomName;
-        }
-      }
-
-      const wrapperWidth = 340;
-      const centerOffset = (wrapperWidth / 2) - (CARD_FULL_WIDTH / 2);
-      const stopX = -(winningIndex * CARD_FULL_WIDTH) + centerOffset;
-
-      // Принудительно заставляем браузер просчитать ленту перед запуском
-      tape.offsetHeight;
-
+      // 2. Через 2.5 секунды резко останавливаем и показываем выигранный NFT-подарок
       setTimeout(() => {
-        // Плавная прокрутка: резкий старт и красивое торможение казино
-        tape.style.transition = 'transform 4.5s cubic-bezier(0.1, 0.4, 0.1, 1)';
-        tape.style.transform = `translateX(${stopX}px)`;
-      }, 100);
-
-      // Остановка и фиксация победителя
-      setTimeout(() => {
-        const winnerCard = document.getElementById(`card-${winningIndex}`);
-        if(winnerCard) winnerCard.classList.add('winner-anim');
-
-        // Переводим техническое название подарка на красивый русский язык
-        const prettyNames = {
-          plushpepe: "Plush Pepe 🐸",
-          durovscap: "Durov's Cap 👑",
-          jellybunny: "Jelly Bunny 🐰",
-          magichat: "Magic Hat 🎩",
-          homemadecake: "Homemade Cake 🍰",
-          spicedwine: "Spiced Wine 🍷"
-        };
-
-        document.getElementById('priceText').innerHTML = `🎉 Вы выиграли: ${prettyNames[winningGiftName] || winningGiftName}! 🎉`;
-        document.getElementById('spinBtn').innerText = "Забрать лут";
-        document.getElementById('spinBtn').disabled = false;
+        const winner = gifts[Math.floor(Math.random() * gifts.length)];
         
-        document.getElementById('spinBtn').onclick = function() {
-          tg.close();
-        };
-      }, 4600);
+        imgElement.className = "gift-display"; 
+        imgElement.src = winner.url; // Ставим картинку выигранного подарка с вашего хостинга
+        
+        setTimeout(() => {
+          imgElement.className = "gift-display win-effect";
+          document.getElementById('priceText').innerHTML = `🎉 Вы выиграли: <br><b>${winner.name}</b>! 🎉`;
+          
+          const btn = document.getElementById('spinBtn');
+          btn.innerText = "Забрать лут";
+          btn.disabled = false;
+          btn.onclick = function() {
+            tg.close();
+          };
+        }, 50);
+
+      }, 2500);
     }
   </script>
 </body>
