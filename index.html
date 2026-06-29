@@ -3,119 +3,155 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Кейс Теллс — Telegram Gifts</title>
+  <title>TeleLoot — Кейсы</title>
   <script src="https://telegram.org"></script>
   <style>
     body {
-      background: #101721;
+      background: #0f172a;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       text-align: center;
       margin: 0;
       padding: 20px;
-    }
-    .case-container {
-      margin-top: 40px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .case-display {
-      width: 200px;
-      height: 200px;
-      border-radius: 24px;
-      background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
-      border: 2px solid #24a1de;
-      box-shadow: 0 0 25px rgba(36, 161, 222, 0.2);
-      display: flex;
-      justify-content: center;
-      align-items: center;
       overflow: hidden;
-      margin-bottom: 24px;
+    }
+
+    .case-title {
+      font-size: 26px;
+      font-weight: 800;
+      margin-top: 20px;
+      background: linear-gradient(45deg, #38bdf8, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Главный контейнер рулетки */
+    .roulette-wrapper {
       position: relative;
+      width: 100%;
+      max-width: 360px;
+      height: 160px;
+      margin: 40px auto 20px auto;
+      background: #1e293b;
+      border-radius: 20px;
+      border: 2px solid #334155;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      overflow: hidden; /* Прячем картинки, которые не влезают */
     }
-    .case-display img {
-      width: 85%;
-      height: 85%;
-      object-fit: contain;
+
+    /* Центральный маркер (стрелочка, которая показывает выигрыш) */
+    .roulette-marker {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 100%;
+      background: #06b6d4;
+      box-shadow: 0 0 15px #06b6d4;
+      z-index: 10;
     }
-    .price-tag {
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 24px;
+    .roulette-marker::before {
+      content: '▼';
+      position: absolute;
+      top: -2px;
+      left: -6px;
+      color: #06b6d4;
+      font-size: 14px;
+    }
+
+    /* Длинная лента с подарками */
+    .roulette-tape {
       display: flex;
       align-items: center;
-      gap: 6px;
-    }
-    .star-icon {
-      color: #ffb300;
-      text-shadow: 0 0 10px rgba(255, 179, 0, 0.4);
-    }
-    .btn-buy {
-      background: #24a1de;
-      color: white;
-      border: none;
-      padding: 14px 40px;
-      font-size: 18px;
-      border-radius: 14px;
-      cursor: pointer;
-      font-weight: 600;
-      width: 80%;
-      max-width: 280px;
-      box-shadow: 0 4px 15px rgba(36, 161, 222, 0.3);
-      transition: all 0.2s ease;
-    }
-    .btn-buy:disabled {
-      background: #2d3748;
-      box-shadow: none;
-      cursor: not-allowed;
-    }
-    .roulette-line {
-      display: flex;
       position: absolute;
       left: 0;
-      width: auto;
+      top: 0;
+      height: 100%;
+      will-change: transform;
     }
-    .roulette-item {
-      width: 200px;
-      height: 200px;
+
+    /* Карточка отдельного подарка внутри ленты */
+    .gift-card {
+      width: 130px; /* Фиксированная ширина */
+      height: 130px;
+      margin: 0 10px;
+      background: radial-gradient(circle, #334155 0%, #1e293b 100%);
+      border: 1px solid #475569;
+      border-radius: 16px;
       display: flex;
       justify-content: center;
       align-items: center;
       flex-shrink: 0;
+      box-sizing: border-box;
     }
-    .roulette-item img {
+
+    .gift-card img {
       width: 80%;
       height: 80%;
       object-fit: contain;
     }
-    @keyframes spin {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-3000px); }
+
+    /* Элементы управления ниже */
+    .price-tag {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #f59e0b;
     }
-    .spinning {
-      animation: spin 4s cubic-bezier(0.1, 0.8, 0.13, 1) forwards;
+
+    .btn-spin {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 16px 50px;
+      font-size: 18px;
+      border-radius: 16px;
+      cursor: pointer;
+      font-weight: 700;
+      width: 85%;
+      max-width: 300px;
+      box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    .btn-spin:disabled {
+      background: #475569;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    /* Эффект победного подмигивания подарка */
+    @keyframes winPulse {
+      0% { transform: scale(1); filter: drop-shadow(0 0 5px #06b6d4); }
+      100% { transform: scale(1.1); filter: drop-shadow(0 0 25px #06b6d4); }
+    }
+    .winner-anim {
+      animation: winPulse 0.6s infinite alternate ease-in-out;
     }
   </style>
 </head>
 <body>
 
-  <div class="case-container">
-    <div id="caseDisplay" class="case-display">
-      <!-- Логотип закрытого кейса -->
-      <img id="caseImg" src="https://telegram.org" alt="Кейс Теллс">
+  <div class="case-title">КЕЙС ТЕЛЛС</div>
+
+  <!-- Окно рулетки -->
+  <div class="roulette-wrapper">
+    <div class="roulette-marker"></div>
+    <div id="rouletteTape" class="roulette-tape">
+      <!-- Сюда JS вставит начальную картинку закрытого кейса -->
     </div>
-    
-    <div id="priceText" class="price-tag"><span class="star-icon">⭐️</span> 99 Звёзд</div>
-    <button id="buyBtn" class="btn-buy" onclick="startPurchase()">Открыть кейс</button>
   </div>
+  
+  <div id="priceText" class="price-tag">⭐️ 99 Звёзд</div>
+  <button id="spinBtn" class="btn-spin" onclick="startPurchase()">Открыть кейс</button>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
 
-    // Официальные превью NFT-подарков с Fragment
+    // Официальные Telegram NFT Gifts с Fragment
     const telegramGifts = [
       "https://fragment.com",
       "https://fragment.com",
@@ -125,10 +161,22 @@
       "https://fragment.com"
     ];
 
+    const tape = document.getElementById('rouletteTape');
+    const CARD_WIDTH = 150; // 130px карточка + 20px отступы (10px с каждой стороны)
+
+    // При старте показываем просто логотип кейса по центру
+    function initCase() {
+      tape.style.transform = `translateX(0px)`;
+      tape.innerHTML = `
+        <div class="gift-card" style="margin-left: 105px; width: 150px; height: 150px;">
+          <img src="https://telegram.org" alt="Логотип">
+        </div>
+      `;
+    }
+    initCase();
+
     function startPurchase() {
-      document.getElementById('buyBtn').disabled = true;
-      
-      // Автоматически определяем текущий адрес сервера (работает и на localhost, и на Railway)
+      document.getElementById('spinBtn').disabled = true;
       const serverUrl = window.location.origin;
 
       fetch(`${serverUrl}/create-invoice`, {
@@ -136,70 +184,81 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: tg.initDataUnsafe.user?.id || 0 })
       })
-      .then(res => {
-        if (!res.ok) throw new Error('Ошибка сервера');
-        return res.json();
-      })
+      .then(res => res.json())
       .then(data => {
-        // Открытие платежного окна Telegram Stars
         tg.openInvoice(data.invoiceLink, function(status) {
           if (status === 'paid') {
-            triggerGiftRoulette();
+            generateAndSpin();
           } else {
-            alert('Оплата отменена или отклонена');
-            document.getElementById('buyBtn').disabled = false;
+            alert('Оплата не удалась');
+            document.getElementById('spinBtn').disabled = false;
           }
         });
       })
-      .catch((err) => {
-        alert('Не удалось связаться с сервером. Запускаем демо-режим анимации.');
-        triggerGiftRoulette();
+      .catch(() => {
+        // ДЕМО-РЕЖИМ для тестов (если бэкэнд недоступен)
+        generateAndSpin();
       });
     }
 
-    function triggerGiftRoulette() {
-      const display = document.getElementById('caseDisplay');
-      display.innerHTML = '';
+    function generateAndSpin() {
+      tape.innerHTML = ''; // Очищаем заставку
+      tape.style.transition = 'none'; // Сбрасываем старую анимацию
+      tape.style.transform = 'translateX(0px)';
+
+      const totalCards = 35; // Длина ленты (чем больше, тем дольше крутится)
+      const winningIndex = 28; // Какой по счету элемент выиграет (ближе к концу)
       
-      const line = document.createElement('div');
-      line.className = 'roulette-line';
-      
-      const totalItems = 20;
+      // Заполняем ленту случайными подарками
       let winningGiftUrl = '';
       
-      for(let i = 0; i < totalItems; i++) {
-        const randomGift = telegramGifts[i % telegramGifts.length];
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'roulette-item';
+      for (let i = 0; i < totalCards; i++) {
+        const randomGift = telegramGifts[Math.floor(Math.random() * telegramGifts.length)];
+        
+        const card = document.createElement('div');
+        card.className = 'gift-card';
+        card.id = `card-${i}`;
         
         const img = document.createElement('img');
         img.src = randomGift;
         
-        itemDiv.appendChild(img);
-        line.appendChild(itemDiv);
-        
-        if (i === 15) {
-          winningGiftUrl = randomGift; // 16-й элемент побеждает
+        card.appendChild(img);
+        tape.appendChild(card);
+
+        // Запоминаем подарок, который окажется на 28-й позиции
+        if (i === winningIndex) {
+          winningGiftUrl = randomGift;
         }
       }
-      
-      display.appendChild(line);
-      
+
+      // Рассчитываем точную координату остановки
+      // Нам нужно, чтобы 28-я карточка встала ровно по центру контейнера (360px)
+      const wrapperWidth = 360;
+      const centerOffset = (wrapperWidth / 2) - (CARD_WIDTH / 2);
+      const stopX = -(winningIndex * CARD_WIDTH) + centerOffset;
+
+      // Запускаем плавную прокрутку с помощью CSS Transition
       setTimeout(() => {
-        line.classList.add('spinning');
+        // cubic-bezier создает эффект: сначала мощный рывок, а в конце долгое плавное торможение
+        tape.style.transition = 'transform 5s cubic-bezier(0.1, 0.8, 0.15, 1)';
+        tape.style.transform = `translateX(${stopX}px)`;
       }, 50);
 
-      // Ждем окончания прокрутки (4 секунды)
+      // Ждем 5 секунд (время анимации) и подсвечиваем выигрыш
       setTimeout(() => {
-        display.innerHTML = `<img src="${winningGiftUrl}" alt="Выигрыш">`;
-        document.getElementById('priceText').innerHTML = "✨ Вы выиграли NFT-подарок! ✨";
-        document.getElementById('buyBtn').innerText = "Закрыть";
-        document.getElementById('buyBtn').disabled = false;
+        const winnerCard = document.getElementById(`card-${winningIndex}`);
+        winnerCard.classList.add('winner-anim');
+
+        // Обновляем текст под рулеткой
+        document.getElementById('priceText').innerHTML = "🎉 Вы получили лимитированный подарок! 🎉";
+        document.getElementById('spinBtn').innerText = "Забрать лут";
+        document.getElementById('spinBtn').disabled = false;
         
-        document.getElementById('buyBtn').onclick = function() {
+        // Меняем кнопку на закрытие приложения
+        document.getElementById('spinBtn').onclick = function() {
           tg.close();
         };
-      }, 4050);
+      }, 5100);
     }
   </script>
 </body>
