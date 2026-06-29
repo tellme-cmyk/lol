@@ -1,7 +1,7 @@
 const express = require('express');
 const { Telegraf } = require('telegraf');
 const path = require('path');
-const https = require('https');
+const fs = require('fs');
 
 const BOT_TOKEN = process.env.BOT_TOKEN; 
 
@@ -15,38 +15,51 @@ const app = express();
 
 app.use(express.json());
 
+// Разрешаем CORS-запросы
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();
 });
 
+// === МАГИЧЕСКИЙ ПЕРЕВОДЧИК РЕГИСТРА ФАЙЛОВ ===
+// Этот код находит файлы на сервере, даже если в коде маленькие буквы, а на диске большие
+app.use((req, res, next) => {
+  // Проверяем, что запрос идет к файлу (например, картинке .webp), а не к API
+  if (req.path.includes('.')) {
+    const requestedFile = path.join(__dirname, req.path);
+    
+    // Если файл в оригинальном виде не найден
+    if (!fs.existsSync(requestedFile)) {
+      const dir = path.dirname(requestedFile);
+      const filename = path.basename(requestedFile).toLowerCase();
+      
+      try {
+        const files = fs.readdirSync(dir);
+        // Ищем файл в папке, не обращая внимания на большие/маленькие буквы
+        const found = files.find(f => f.toLowerCase() === filename);
+        
+        if (found) {
+          // Если нашли файл с большими буквами, подменяем адрес запроса
+          req.url = path.join(path.dirname(req.url), found);
+        }
+      } catch (err) {
+        console.error("Ошибка поиска файла:", err);
+      }
+    }
+  }
+  next();
+});
+
+// Разрешаем раздачу всех картинок и файлов из папки
+app.use(express.static(__dirname));
+
+// Отдаем главный экран приложения
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// === НОВЫЙ ДВИЖОК: СКАЧИВАНИЕ ОФИЦИАЛЬНЫХ КАРТИНОК БЕЗ БЛОКИРОВОК ===
-app.get('/proxy-gift', (req, res) => {
-  const giftName = req.query.name;
-  if (!giftName) return res.status(400).send('No gift name');
-  
-  // Официальный сервер картинок Fragment
-  const url = `https://fragment.com{giftName}-1.png`;
-
-  https.get(url, (response) => {
-    if (response.statusCode !== 200) {
-      return res.status(404).send('Gift not found');
-    }
-    res.setHeader('Content-Type', 'image/png');
-    // Кешируем картинки в системе, чтобы они загружались мгновенно
-    res.setHeader('Cache-Control', 'public, max-age=86400'); 
-    response.pipe(res);
-  }).on('error', (e) => {
-    res.status(500).send(e.message);
-  });
-});
-
-// === ЛОГИКА ТЕЛЕГРАМ БОТА ===
+// Логика запуска бота
 bot.start((ctx) => {
   const appUrl = process.env.RAILWAY_PUBLIC_DOMAIN 
     ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` 
@@ -63,20 +76,16 @@ bot.on('pre_checkout_query', async (ctx) => {
   await ctx.answerPreCheckoutQuery(true);
 });
 
-bot.on('successful_payment', (ctx) => {
-  console.log(`🎉 Пользователь ${ctx.from.id} оплатил кейс.`);
-});
-
-// === API ДЛЯ ГЕНЕРАЦИИ ОПЛАТЫ В ЗВЕЗДАХ ===
+// Создание ссылки на оплату Звёзд
 app.post('/create-invoice', async (req, res) => {
   try {
     const { userId } = req.body;
     const invoiceLink = await bot.telegram.createInvoiceLink({
       title: "Кейс Теллс",
       description: "Оплата 99 Звёзд за открытие кейса с NFT-подарком Telegram",
-      payload: `tells_case_${userId}_${Date.now()}`,
+      payload: `tells_${userId || 0}_${Date.now()}`,
       provider_token: "", 
-      currency: "XTR",     
+      currency: "XTR", 
       prices: [{ label: "Кейс Теллс", amount: 99 }]
     });
     res.json({ invoiceLink });
@@ -87,7 +96,7 @@ app.post('/create-invoice', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🌐 Сервер запущен на порту ${PORT}`);
+  console.log(`🌐 Сервер TeleLoot запущен на порту ${PORT}`);
 });
 
 bot.launch();
