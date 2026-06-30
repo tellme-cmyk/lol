@@ -6,7 +6,7 @@ const fs = require('fs');
 const BOT_TOKEN = process.env.BOT_TOKEN; 
 
 if (!BOT_TOKEN) {
-  console.error("КРИТИЧЕСКАЯ ОШИБКА: Переменная BOT_TOKEN не задана!");
+  console.error("КРИТИЧЕСКАЯ ОШИБКА: Переменная BOT_TOKEN не задана в Railway!");
   process.exit(1);
 }
 
@@ -15,51 +15,39 @@ const app = express();
 
 app.use(express.json());
 
-// Разрешаем CORS-запросы
+// CORS-политика для бесперебойной работы в Telegram
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();
 });
 
-// === МАГИЧЕСКИЙ ПЕРЕВОДЧИК РЕГИСТРА ФАЙЛОВ ===
-// Этот код находит файлы на сервере, даже если в коде маленькие буквы, а на диске большие
-app.use((req, res, next) => {
-  // Проверяем, что запрос идет к файлу (например, картинке .webp), а не к API
-  if (req.path.includes('.')) {
-    const requestedFile = path.join(__dirname, req.path);
-    
-    // Если файл в оригинальном виде не найден
-    if (!fs.existsSync(requestedFile)) {
-      const dir = path.dirname(requestedFile);
-      const filename = path.basename(requestedFile).toLowerCase();
-      
-      try {
-        const files = fs.readdirSync(dir);
-        // Ищем файл в папке, не обращая внимания на большие/маленькие буквы
-        const found = files.find(f => f.toLowerCase() === filename);
-        
-        if (found) {
-          // Если нашли файл с большими буквами, подменяем адрес запроса
-          req.url = path.join(path.dirname(req.url), found);
-        }
-      } catch (err) {
-        console.error("Ошибка поиска файла:", err);
-      }
-    }
-  }
-  next();
-});
-
-// Разрешаем раздачу всех картинок и файлов из папки
-app.use(express.static(__dirname));
-
-// Отдаем главный экран приложения
+// Главная страница приложения
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Логика запуска бота
+// === ИСПРАВЛЕННЫЙ РОУТЕР КАРТИНОК ===
+// Перенаправляет запросы к картинкам, игнорируя большие и маленькие буквы
+app.get('/assets/:filename', (req, res) => {
+  const requestedName = req.params.filename.toLowerCase();
+  
+  try {
+    const files = fs.readdirSync(__dirname);
+    // Ищем файл в папке проекта, переводя всё в нижний регистр
+    const realFile = files.find(f => f.toLowerCase() === requestedName);
+    
+    if (realFile) {
+      res.sendFile(path.join(__dirname, realFile));
+    } else {
+      res.status(404).send('File not found');
+    }
+  } catch (err) {
+    res.status(500).send('Server Error');
+  }
+});
+
+// Команда запуска бота
 bot.start((ctx) => {
   const appUrl = process.env.RAILWAY_PUBLIC_DOMAIN 
     ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` 
@@ -72,17 +60,15 @@ bot.start((ctx) => {
   });
 });
 
-bot.on('pre_checkout_query', async (ctx) => {
-  await ctx.answerPreCheckoutQuery(true);
-});
+bot.on('pre_checkout_query', (ctx) => ctx.answerPreCheckoutQuery(true));
 
-// Создание ссылки на оплату Звёзд
+// Создание ссылки на оплату
 app.post('/create-invoice', async (req, res) => {
   try {
     const { userId } = req.body;
     const invoiceLink = await bot.telegram.createInvoiceLink({
       title: "Кейс Теллс",
-      description: "Оплата 99 Звёзд за открытие кейса с NFT-подарком Telegram",
+      description: "Оплата 99 Звёзд за открытие кейса",
       payload: `tells_${userId || 0}_${Date.now()}`,
       provider_token: "", 
       currency: "XTR", 
@@ -90,7 +76,7 @@ app.post('/create-invoice', async (req, res) => {
     });
     res.json({ invoiceLink });
   } catch (error) {
-    res.status(500).json({ error: 'Ошибка создания инвойса' });
+    res.status(500).json({ error: 'Invoice error' });
   }
 });
 
