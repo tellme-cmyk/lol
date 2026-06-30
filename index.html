@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TeleLoot</title>
+  <script src="https://telegram.org"></script>
   <style>
     body {
       background: #0f172a;
@@ -16,7 +17,7 @@
       width: 180px;
       height: 180px;
       margin: 40px auto;
-      background: #1e293b;
+      background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
       border: 3px solid #3b82f6;
       border-radius: 24px;
       display: flex;
@@ -53,64 +54,90 @@
   <h1>КЕЙС ТЕЛЛС</h1>
 
   <div class="roulette-wrapper">
-    <!-- Стартовый логотип кейса -->
-    <img id="giftImg" class="gift-display" src="case.webp" alt="Кейс">
+    <!-- Запрашиваем картинку закрытого кейса (убедитесь, что файл case.webp лежит на сервере) -->
+    <img id="giftImg" class="gift-display" src="/assets/case.webp" alt="Кейс">
   </div>
   
   <div id="priceText" class="price-tag">⭐️ 99 Звёзд</div>
-  <button id="spinBtn" class="btn-spin" onclick="startOpening()">Открыть кейс</button>
+  <button id="spinBtn" class="btn-spin" onclick="clickOpenButton()">Открыть кейс</button>
 
   <script>
-    // Прописываем пути к вашим WebP файлам (обязательно маленькими буквами в коде)
+    let tg = window.Telegram?.WebApp || null;
+    if (tg) { tg.ready(); tg.expand(); }
+
+    // === ВАШ МАССИВ С ИСПРАВЛЕННОЙ ЗАПЯТОЙ ===
     const gifts = [
-      { name: "Artisan Brick", url: "RVFBMlJJN1h2SXM5d0pRS3J4a1RiN1l0cGVVdWFELXAwZVQ1dUJlNGJrY0dUMmJk.webp" },
-      { name: "Precious Peach", url: "RVFBNGk1OGl1UzlEVVlSdFVaOTdzWm81bW5rYmlZVUJwV1hRT2UzZEVVQ2NQMVc4.webp" },
-      { name: "Snoop Cigar", url: "RVFBNzJVZXZyX01IdnpZd1NDSEpVSy11QzZrZC13OGtieHpoSjQ5V0lpRy1vNkNE.webp" },
-      { name: "Vintage Cigar", url: "RVFBQ2NRcFIyZm1kZUVOV2RFMllHUVdIVnhTVHlBOFpxNF9rN3JrX0lheENSWE5l.webp" }
-      { name: "Scared Cat", url: "RVFBVHVVR2R2cmpMdlRXRTVwcFZGT1ZDcVUyZGxDTFVuS1RzdTBuMUpZbTlsYTEw.webp" },
-    ];
+      { name: "Artisan Brick 🧱", url: "/assets/RVFBMlJJN1h2SXM5d0pRS3J4a1RiN1l0cGVVdWFELXAwZVQ1dUJlNGJrY0dUMmJk.webp" },
+      { name: "Precious Peach 🍑", url: "/assets/RVFBNGk1OGl1UzlEVVlSdFVaOTdzWm81bW5rYmlZVUJwV1hRT2UzZEVVQ2NQMVc4.webp" },
+      { name: "Snoop Cigar 🚬", url: "/assets/RVFBNzJVZXZyX01IdnpZd1NDSEpVSy11QzZrZC13OGtieHpoSjQ5V0lpRy1vNkNE.webp" },
+      { name: "Vintage Cigar 🍂", url: "/assets/RVFBQ2NRcFIyZm1kZUVOV2RFMllHUVdIVnhTVHlBOFpxNF9rN3JrX0lheENSWE5l.webp" },
+      { name: "Scared Cat 🐱", url: "/assets/RVFBVHVVR2R2cmpMdlRXRTVwcFZGT1ZDcVUyZGxDTFVuS1RzdTBuMUpZbTlsYTEw.webp" }
     ];
 
     let intervalId = null;
 
-    function startOpening() {
+    function clickOpenButton() {
       const btn = document.getElementById('spinBtn');
       const img = document.getElementById('giftImg');
       
       btn.disabled = true;
       document.getElementById('priceText').innerText = "⚡️ Открытие...";
 
-      // Железный JS-таймер: каждые 40 миллисекунд принудительно меняем картинку на экране
+      // Безумный перебор картинок
       let counter = 0;
       intervalId = setInterval(() => {
-        // Берем случайную картинку из массива и подставляем в src
         const randomGift = gifts[Math.floor(Math.random() * gifts.length)];
-        img.src = randomGift;
+        img.src = randomGift.url;
         counter++;
 
-        // Ровно через 2 секунды (50 итераций) останавливаем этот безумный перебор
-        if (counter >= 50) {
+        if (counter >= 40) {
           clearInterval(intervalId);
-          showWinner();
+          handlePaymentAndWin();
         }
-      }, 40);
+      }, 60);
     }
 
-    function showWinner() {
+    function handlePaymentAndWin() {
+      const serverUrl = window.location.origin;
+      let userId = tg?.initDataUnsafe?.user?.id || 777;
+
+      fetch(`${serverUrl}/create-invoice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: userId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (tg && data.invoiceLink) {
+          tg.openInvoice(data.invoiceLink, function(status) {
+            if (status === 'paid') {
+              showFinalWinner();
+            } else {
+              alert('Оплата отклонена');
+              window.location.reload();
+            }
+          });
+        } else {
+          showFinalWinner();
+        }
+      })
+      .catch(() => {
+        showFinalWinner(); // Демо-подстраховка для админа
+      });
+    }
+
+    function showFinalWinner() {
       const btn = document.getElementById('spinBtn');
       const img = document.getElementById('giftImg');
 
-      // Выбираем финальный призовой подарок
-      const finalGift = gifts[Math.floor(Math.random() * gifts.length)];
-      img.src = finalGift;
+      // Выбираем победителя
+      const winner = gifts[Math.floor(Math.random() * gifts.length)];
+      img.src = winner.url;
 
-      // Убираем расширение .webp из текста для красоты
-      const cleanName = finalGift.replace('.webp', '').toUpperCase();
-
-      document.getElementById('priceText').innerHTML = `🎉 Выиграно: <b>${cleanName}</b>!`;
-      btn.innerText = "Готово";
+      document.getElementById('priceText').innerHTML = `🎉 Вы выиграли: <br><b>${winner.name}</b>!`;
+      btn.innerText = "Закрыть приложение";
       btn.disabled = false;
-      btn.onclick = () => { window.location.reload(); }; // Перезапуск при повторном клике
+      btn.onclick = () => { if (tg) tg.close(); else window.location.reload(); };
     }
   </script>
 </body>
