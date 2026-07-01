@@ -1,3 +1,22 @@
+const Database = require("better-sqlite3");
+
+const db = new Database("teleloot.db");
+/* ===========================
+   INIT DB
+=========================== */
+
+db.prepare(`
+CREATE TABLE IF NOT EXISTS inventory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    userId TEXT,
+    name TEXT,
+    rarity TEXT,
+    price INTEGER,
+    image TEXT,
+    createdAt INTEGER
+)
+`).run();
+
 require("dotenv").config();
 
 const express = require("express");
@@ -116,13 +135,24 @@ app.post("/spin-case", (req, res) => {
 
         const win = getWeightedGift();
 
-        res.json({
+        
+db.prepare(`
+INSERT INTO inventory
+(userId, name, rarity, price, image, createdAt)
+VALUES (?, ?, ?, ?, ?, ?)
+`).run(
+    userId,
+    win.name,
+    win.rarity,
+    win.price,
+    win.image,
+    Date.now()
+);
 
-            success: true,
-
-            gift: win
-
-        });
+res.json({
+    success: true,
+    gift: win
+});
 
     }
 
@@ -237,3 +267,34 @@ function getWeightedGift() {
     return pool[Math.floor(Math.random() * pool.length)];
 
 }
+
+app.post("/inventory", (req, res) => {
+
+    try {
+
+        const { userId } = req.body;
+
+        const items = db.prepare(`
+            SELECT * FROM inventory
+            WHERE userId = ?
+            ORDER BY id DESC
+        `).all(userId);
+
+        res.json({
+            success: true,
+            items
+        });
+
+    }
+
+    catch (e) {
+
+        console.log(e);
+
+        res.status(500).json({
+            success: false
+        });
+
+    }
+
+});
