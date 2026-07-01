@@ -16,7 +16,30 @@ CREATE TABLE IF NOT EXISTS inventory (
     createdAt INTEGER
 )
 `).run();
+db.prepare(`
+CREATE TABLE IF NOT EXISTS users (
+    userId TEXT PRIMARY KEY,
+    balance INTEGER DEFAULT 0
+)
+`).run();
+function ensureUser(userId) {
 
+    const user = db.prepare(`
+        SELECT * FROM users WHERE userId = ?
+    `).get(userId);
+
+    if (!user) {
+
+        db.prepare(`
+            INSERT INTO users (userId, balance)
+            VALUES (?, 1000)
+        `).run(userId);
+
+        return { userId, balance: 1000 };
+    }
+
+    return user;
+}
 require("dotenv").config();
 
 const express = require("express");
@@ -123,15 +146,61 @@ app.post("/spin-case", (req, res) => {
 
         if (!userId) {
 
-            return res.status(400).json({
-
+            return res.json({
                 success: false,
-
-                error: "no userId"
-
+                error: "no_user"
             });
 
         }
+
+        const user = ensureUser(userId);
+
+        const CASE_PRICE = 99;
+
+        if (user.balance < CASE_PRICE) {
+
+            return res.json({
+                success: false,
+                error: "not_enough_balance"
+            });
+
+        }
+
+        // списываем цену кейса
+        let balance = user.balance - CASE_PRICE;
+
+        const win = getWeightedGift();
+
+        // начисляем выигрыш
+        balance += win.price;
+
+        db.prepare(`
+            UPDATE users
+            SET balance = ?
+            WHERE userId = ?
+        `).run(balance, userId);
+
+        res.json({
+
+            success: true,
+            gift: win,
+            balance: balance
+
+        });
+
+    }
+
+    catch (e) {
+
+        console.log(e);
+
+        res.status(500).json({
+            success: false
+        });
+
+    }
+
+
 
         const win = getWeightedGift();
 
