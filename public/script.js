@@ -577,3 +577,108 @@ function ensureStyles() {
 =========================== */
 
 ensureStyles();
+
+/* ===========================
+   INVENTORY SYSTEM
+=========================== */
+
+const inventoryBtn = document.getElementById("inventoryBtn");
+const inventoryPage = document.getElementById("inventoryPage");
+const inventoryGrid = document.getElementById("inventoryGrid");
+
+inventoryBtn.addEventListener("click", openInventory);
+
+async function openInventory() {
+
+    inventoryPage.classList.remove("hidden");
+
+    document.querySelector("main").style.display = "none";
+
+    await loadInventory();
+
+}
+
+async function loadInventory() {
+
+    try {
+
+        const userId = state.user?.id || 0;
+
+        const res = await fetch("/inventory", {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type": "application/json"
+
+            },
+
+            body: JSON.stringify({ userId })
+
+        });
+
+        const data = await res.json();
+
+        inventoryGrid.innerHTML = "";
+
+        if (!data.items || data.items.length === 0) {
+
+            inventoryGrid.innerHTML = "<p>Инвентарь пуст</p>";
+
+            return;
+
+        }
+
+        for (const item of data.items) {
+
+            const el = document.createElement("div");
+
+            el.className = "inv-card";
+
+            el.innerHTML = `
+
+                <img src="${item.image}" />
+
+                <div class="inv-name">${item.name}</div>
+
+                <div class="inv-price">⭐ ${item.price}</div>
+
+                <div class="inv-rarity">${item.rarity}</div>
+
+            `;
+
+            inventoryGrid.appendChild(el);
+
+        }
+
+    }
+
+    catch (e) {
+
+        console.log(e);
+
+        inventoryGrid.innerHTML = "<p>Ошибка загрузки</p>";
+
+    }
+
+}
+
+/* ===========================
+   CLOSE INVENTORY ON NAV
+=========================== */
+
+function closeInventory() {
+
+    inventoryPage.classList.add("hidden");
+
+    document.querySelector("main").style.display = "flex";
+
+}
+
+/* auto-bind other buttons later */
+
+document.getElementById("openButton")
+.addEventListener("click", () => {
+    closeInventory();
+});
