@@ -682,3 +682,129 @@ document.getElementById("openButton")
 .addEventListener("click", () => {
     closeInventory();
 });
+
+/* ===========================
+   UPGRADE SYSTEM (CLIENT)
+=========================== */
+
+const upgradeBtn = document.getElementById("upgradeBtn");
+const upgradePage = document.getElementById("upgradePage");
+const upgradeInventory = document.getElementById("upgradeInventory");
+const upgradeInfo = document.getElementById("upgradeInfo");
+const startUpgrade = document.getElementById("startUpgrade");
+
+let selectedItem = null;
+let selectedTarget = null;
+
+upgradeBtn.addEventListener("click", openUpgrade);
+
+function openUpgrade() {
+
+    upgradePage.classList.remove("hidden");
+
+    document.querySelector("main").style.display = "none";
+
+    loadUpgradeItems();
+
+}
+
+async function loadUpgradeItems() {
+
+    const res = await fetch("/inventory", {
+
+        method: "POST",
+
+        headers: {
+
+            "Content-Type": "application/json"
+
+        },
+
+        body: JSON.stringify({ userId: state.user?.id || 0 })
+
+    });
+
+    const data = await res.json();
+
+    upgradeInventory.innerHTML = "";
+
+    for (const item of data.items) {
+
+        const el = document.createElement("div");
+
+        el.className = "inv-card";
+
+        el.innerHTML = `
+
+            <img src="${item.image}" />
+
+            <div>${item.name}</div>
+
+        `;
+
+        el.onclick = () => selectUpgradeItem(item);
+
+        upgradeInventory.appendChild(el);
+
+    }
+
+}
+
+function selectUpgradeItem(item) {
+
+    selectedItem = item;
+
+    upgradeInfo.innerText = `Выбрано: ${item.name}`;
+
+}
+
+startUpgrade.onclick = async () => {
+
+    if (!selectedItem) return;
+
+    // пока просто апгрейдим в более дорогой предмет
+    const target = gifts.find(g => g.price > selectedItem.price);
+
+    if (!target) {
+
+        upgradeInfo.innerText = "Нет цели для апгрейда";
+
+        return;
+
+    }
+
+    const res = await fetch("/upgrade", {
+
+        method: "POST",
+
+        headers: {
+
+            "Content-Type": "application/json"
+
+        },
+
+        body: JSON.stringify({
+
+            userId: state.user?.id || 0,
+
+            itemName: selectedItem.name,
+
+            targetName: target.name
+
+        })
+
+    });
+
+    const data = await res.json();
+
+    if (data.result) {
+
+        upgradeInfo.innerText = `🔥 УСПЕХ! Ты получил ${data.result.name}`;
+
+    } else {
+
+        upgradeInfo.innerText = `❌ Неудача`;
+
+    }
+
+};
