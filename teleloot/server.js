@@ -298,3 +298,13 @@ app.post("/inventory", (req, res) => {
     }
 
 });
+
+/* ===========================
+   UPGRADE SYSTEM (SERVER)
+=========================== */
+
+function getItemByName(name) {
+
+    return gifts.find(g => g.name === name);
+
+}
