@@ -158,7 +158,8 @@ function reset() {
    SPIN SYSTEM
 =========================== */
 
-function openCase() {
+
+async function openCase() {
 
     if (state.spinning) return;
 
@@ -168,10 +169,45 @@ function openCase() {
 
     winCard.classList.add("hidden");
 
-    // создаём новую ленту перед прокруткой
-    createRouletteItems();
+    try {
 
-    startSpin();
+        const userId = state.user?.id || 0;
+
+        // 👉 получаем ЧЕСТНЫЙ выигрыш с сервера
+        const res = await fetch("/spin-case", {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type": "application/json"
+
+            },
+
+            body: JSON.stringify({ userId })
+
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+
+            throw new Error("server error");
+
+        }
+
+        startSpin(data.gift);
+
+    }
+
+    catch (e) {
+
+        console.log(e);
+
+        // fallback
+        startSpin(gifts[Math.floor(Math.random() * gifts.length)]);
+
+    }
 
 }
 
@@ -179,55 +215,59 @@ function openCase() {
    MAIN SPIN LOGIC
 =========================== */
 
-function startSpin() {
 
-    const items = document.querySelectorAll(".roulette-item");
+function startSpin(winGift) {
 
-    const itemWidth = 120;
+    const itemWidth = 130;
 
-    const totalItems = items.length;
+    const total = 40;
 
-    // случайный выигрыш (пока клиентский)
-    const winIndex = Math.floor(Math.random() * totalItems);
+    const winPosition = 28; // ближе к центру
 
-    const targetOffset = winIndex * itemWidth;
+    rouletteTrack.innerHTML = "";
 
-    let position = 0;
+    // создаём ленту с гарантированным выигрышем
+    for (let i = 0; i < total; i++) {
 
-    let speed = 25;
+        const gift = (i === winPosition)
+            ? winGift
+            : gifts[Math.floor(Math.random() * gifts.length)];
 
-    let slowDownStarted = false;
+        const el = document.createElement("div");
 
-    let currentIndex = 0;
+        el.className = "roulette-item";
+
+        el.innerHTML = `<img src="${gift.image}" />`;
+
+        rouletteTrack.appendChild(el);
+
+    }
+
+    const centerOffset = window.innerWidth / 2 - itemWidth / 2;
+
+    const target = winPosition * itemWidth - centerOffset;
+
+    let pos = 0;
+
+    let speed = 28;
+
+    let slow = false;
 
     function animate() {
 
-        position += speed;
+        pos += speed;
 
-        rouletteTrack.style.transform = `translateX(-${position}px)`;
+        rouletteTrack.style.transform = `translateX(-${pos}px)`;
 
-        currentIndex = Math.floor(position / itemWidth);
+        if (pos > target - 500) slow = true;
 
-        // старт замедления
-        if (position >= targetOffset - 300 && !slowDownStarted) {
+        if (slow) speed *= 0.94;
 
-            slowDownStarted = true;
+        if (speed < 2) speed = 2;
 
-        }
+        if (pos >= target && speed <= 2.2) {
 
-        // замедление
-        if (slowDownStarted) {
-
-            speed *= 0.96;
-
-            if (speed < 2) speed = 2;
-
-        }
-
-        // остановка
-        if (position >= targetOffset && speed <= 2) {
-
-            finishSpin(winIndex);
+            finishSpin(winGift);
 
             return;
 
@@ -245,18 +285,40 @@ function startSpin() {
    FINISH SPIN
 =========================== */
 
-function finishSpin(index) {
 
-    const gift = gifts[index % gifts.length];
+function finishSpin(gift) {
 
     state.spinning = false;
 
     openButton.disabled = false;
 
-    showWin(gift);
+    winImage.src = gift.image;
+
+    winName.innerText = gift.name;
+
+    winPrice.innerText = `⭐ ${gift.price}`;
+
+    winRarity.innerText = gift.rarity.toUpperCase();
+
+    winCard.className = "";
+
+    winCard.classList.add("fade-in", gift.rarity);
+
+    if (gift.rarity === "legendary") {
+
+        winCard.classList.add("legendary-glow");
+
+    }
+
+    if (gift.rarity === "mythic") {
+
+        winCard.classList.add("mythic-glow");
+
+    }
+
+    winCard.classList.remove("hidden");
 
 }
-
 function showWin(gift) {
 
     // очищаем рулетку визуально
