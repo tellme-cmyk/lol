@@ -40,7 +40,7 @@ function ensureUser(userId) {
 
     return user;
 }
-require("dotenv").config();
+
 
 const express = require("express");
 const { Telegraf } = require("telegraf");
@@ -149,6 +149,76 @@ app.post("/spin-case", (req, res) => {
             return res.json({
                 success: false,
                 error: "no_user"
+app.post("/create-invoice", async (req, res) => {
+
+    try {
+
+        const { userId } = req.body;
+
+        const invoiceLink = await bot.telegram.createInvoiceLink({
+
+            title: "TeleLoot",
+
+            description: "Открытие кейса",
+
+            payload: `case_${userId}_${Date.now()}`,
+
+            provider_token: "",
+
+            currency: "XTR",
+
+            prices: [
+
+                {
+
+                    label: "Кейс",
+
+                    amount: 99
+
+                }
+
+            ]
+
+        });
+
+        res.json({
+
+            success: true,
+
+            invoiceLink
+
+        });
+
+    }
+
+    catch (e) {
+
+        console.log(e);
+
+        res.status(500).json({
+
+            success: false
+
+        });
+
+    }
+
+});
+
+app.post("/spin-case", (req, res) => {
+
+    try {
+
+        const { userId } = req.body;
+
+        if (!userId) {
+
+            return res.json({
+
+                success: false,
+
+                error: "no_user"
+
             });
 
         }
@@ -160,19 +230,18 @@ app.post("/spin-case", (req, res) => {
         if (user.balance < CASE_PRICE) {
 
             return res.json({
+
                 success: false,
+
                 error: "not_enough_balance"
+
             });
 
         }
 
-        // списываем цену кейса
-        let balance = user.balance - CASE_PRICE;
-
         const win = getWeightedGift();
 
-        // начисляем выигрыш
-        balance += win.price;
+        const balance = user.balance - CASE_PRICE + win.price;
 
         db.prepare(`
             UPDATE users
@@ -180,11 +249,35 @@ app.post("/spin-case", (req, res) => {
             WHERE userId = ?
         `).run(balance, userId);
 
+        db.prepare(`
+            INSERT INTO inventory
+            (
+                userId,
+                name,
+                rarity,
+                price,
+                image,
+                createdAt
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+        `).run(
+
+            userId,
+            win.name,
+            win.rarity,
+            win.price,
+            win.image,
+            Date.now()
+
+        );
+
         res.json({
 
             success: true,
+
             gift: win,
-            balance: balance
+
+            balance
 
         });
 
@@ -195,41 +288,6 @@ app.post("/spin-case", (req, res) => {
         console.log(e);
 
         res.status(500).json({
-            success: false
-        });
-
-    }
-
-
-
-        const win = getWeightedGift();
-
-        
-db.prepare(`
-INSERT INTO inventory
-(userId, name, rarity, price, image, createdAt)
-VALUES (?, ?, ?, ?, ?, ?)
-`).run(
-    userId,
-    win.name,
-    win.rarity,
-    win.price,
-    win.image,
-    Date.now()
-);
-
-res.json({
-    success: true,
-    gift: win
-});
-
-    }
-
-    catch (e) {
-
-        console.log("spin error:", e);
-
-        res.status(500).json({
 
             success: false
 
@@ -238,21 +296,6 @@ res.json({
     }
 
 });
-    catch (e) {
-
-        console.log(e);
-
-        res.status(500).json({
-
-            success: false
-
-        });
-
-    }
-
-});
-
-const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
 
