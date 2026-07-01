@@ -1,0 +1,1163 @@
+/* ===========================
+   TELELOOT v2
+   by ChatGPT
+=========================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+
+    width:100%;
+    height:100%;
+
+}
+
+body{
+
+    width:100%;
+    min-height:100vh;
+
+    font-family:
+    Inter,
+    Arial,
+    sans-serif;
+
+    overflow-x:hidden;
+
+    color:#ffffff;
+
+    background:
+
+    linear-gradient(
+        180deg,
+        #08111f 0%,
+        #0f172a 40%,
+        #07101d 100%
+    );
+
+}
+
+/* ===========================
+        BACKGROUND
+=========================== */
+
+.background{
+
+    position:fixed;
+
+    left:0;
+    top:0;
+
+    width:100%;
+    height:100%;
+
+    overflow:hidden;
+
+    z-index:-5;
+
+}
+
+.background::before{
+
+    content:"";
+
+    position:absolute;
+
+    width:500px;
+    height:500px;
+
+    left:-150px;
+    top:-150px;
+
+    border-radius:50%;
+
+    background:
+
+    radial-gradient(
+
+        circle,
+
+        rgba(59,130,246,.35),
+
+        transparent 70%
+
+    );
+
+    filter:blur(40px);
+
+}
+
+.background::after{
+
+    content:"";
+
+    position:absolute;
+
+    width:600px;
+    height:600px;
+
+    right:-220px;
+    bottom:-200px;
+
+    border-radius:50%;
+
+    background:
+
+    radial-gradient(
+
+        circle,
+
+        rgba(168,85,247,.25),
+
+        transparent 70%
+
+    );
+
+    filter:blur(50px);
+
+}
+
+/* ===========================
+        HEADER
+=========================== */
+
+header{
+
+    width:100%;
+
+    padding-top:40px;
+
+    text-align:center;
+
+}
+
+header h1{
+
+    font-size:42px;
+
+    font-weight:800;
+
+    letter-spacing:2px;
+
+    color:#ffffff;
+
+    text-shadow:
+
+    0 0 20px
+
+    rgba(59,130,246,.6);
+
+}
+
+header p{
+
+    margin-top:10px;
+
+    color:#94a3b8;
+
+    font-size:18px;
+
+}
+
+/* ===========================
+          MAIN
+=========================== */
+
+main{
+
+    width:100%;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    margin-top:40px;
+
+}
+
+/* ===========================
+      CASE CONTAINER
+=========================== */
+
+.case-container{
+
+    position:relative;
+
+    width:260px;
+
+    height:260px;
+
+    border-radius:36px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    background:
+
+    rgba(15,23,42,.65);
+
+    backdrop-filter:blur(18px);
+
+    border:
+
+    1px solid
+
+    rgba(255,255,255,.08);
+
+    box-shadow:
+
+    0 0 50px
+
+    rgba(59,130,246,.12);
+
+}
+
+/* ===========================
+        GLOW
+=========================== */
+
+.case-glow{
+
+    position:absolute;
+
+    width:230px;
+
+    height:230px;
+
+    border-radius:50%;
+
+    background:
+
+    radial-gradient(
+
+        circle,
+
+        rgba(59,130,246,.45),
+
+        transparent 70%
+
+    );
+
+    animation:
+
+    pulseGlow
+
+    2.5s
+
+    infinite;
+
+}
+/* ===========================
+        CASE IMAGE
+=========================== */
+
+.case-image{
+
+    width:180px;
+
+    height:180px;
+
+    object-fit:contain;
+
+    z-index:5;
+
+    user-select:none;
+
+    transition:
+
+    transform .35s ease,
+
+    filter .35s ease;
+
+}
+
+.case-image:hover{
+
+    transform:
+
+    scale(1.05);
+
+    filter:
+
+    drop-shadow(0 0 25px rgba(59,130,246,.6));
+
+}
+
+/* ===========================
+        CASE INFO
+=========================== */
+
+.case-info{
+
+    width:100%;
+
+    margin-top:35px;
+
+    text-align:center;
+
+}
+
+.case-info h2{
+
+    font-size:28px;
+
+    font-weight:700;
+
+}
+
+.price{
+
+    margin-top:15px;
+
+    font-size:24px;
+
+    color:#fbbf24;
+
+    font-weight:700;
+
+}
+
+/* ===========================
+        BUTTON
+=========================== */
+
+.open-button{
+
+    margin-top:35px;
+
+    width:280px;
+
+    height:64px;
+
+    border:none;
+
+    border-radius:18px;
+
+    cursor:pointer;
+
+    font-size:21px;
+
+    font-weight:700;
+
+    color:white;
+
+    background:
+
+    linear-gradient(
+
+        135deg,
+
+        #2563eb,
+
+        #3b82f6
+
+    );
+
+    transition:
+
+    transform .2s ease,
+
+    box-shadow .2s ease,
+
+    background .3s ease;
+
+    box-shadow:
+
+    0 10px 35px rgba(37,99,235,.35);
+
+}
+
+.open-button:hover{
+
+    transform:
+
+    translateY(-3px);
+
+    box-shadow:
+
+    0 18px 40px rgba(37,99,235,.45);
+
+}
+
+.open-button:active{
+
+    transform:
+
+    scale(.97);
+
+}
+
+.open-button:disabled{
+
+    cursor:not-allowed;
+
+    opacity:.6;
+
+}
+
+/* ===========================
+      RESULT BLOCK
+=========================== */
+
+.hidden{
+
+    display:none;
+
+}
+
+#resultBlock{
+
+    width:92%;
+
+    max-width:420px;
+
+    margin-top:35px;
+
+    padding:25px;
+
+    border-radius:24px;
+
+    text-align:center;
+
+    background:
+
+    rgba(15,23,42,.72);
+
+    backdrop-filter:blur(18px);
+
+    border:
+
+    1px solid rgba(255,255,255,.08);
+
+    animation:
+
+    resultAppear
+
+    .45s ease;
+
+}
+
+#resultBlock h2{
+
+    font-size:30px;
+
+    margin-bottom:20px;
+
+}
+
+.result-image{
+
+    width:170px;
+
+    height:170px;
+
+    object-fit:contain;
+
+    margin-bottom:20px;
+
+    filter:
+
+    drop-shadow(0 0 20px rgba(255,255,255,.18));
+
+}
+
+#resultName{
+
+    font-size:28px;
+
+    margin-bottom:10px;
+
+}
+
+#resultRarity{
+
+    font-size:18px;
+
+    color:#94a3b8;
+
+    margin-bottom:25px;
+
+}
+
+#againButton{
+
+    width:240px;
+
+    height:56px;
+
+    border:none;
+
+    border-radius:16px;
+
+    cursor:pointer;
+
+    color:white;
+
+    font-size:18px;
+
+    font-weight:700;
+
+    background:
+
+    linear-gradient(
+
+        135deg,
+
+        #16a34a,
+
+        #22c55e
+
+    );
+
+    transition:.25s;
+
+}
+
+#againButton:hover{
+
+    transform:translateY(-2px);
+
+}
+
+/* ===========================
+        BOTTOM MENU
+=========================== */
+
+nav{
+
+    position:fixed;
+
+    bottom:18px;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    width:92%;
+
+    max-width:500px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    gap:12px;
+
+}
+
+nav button{
+
+    flex:1;
+
+    height:60px;
+
+    border:none;
+
+    border-radius:18px;
+
+    background:
+
+    rgba(15,23,42,.82);
+
+    backdrop-filter:blur(18px);
+
+    color:white;
+
+    cursor:pointer;
+
+    font-size:17px;
+
+    transition:.25s;
+
+    border:
+
+    1px solid rgba(255,255,255,.06);
+
+}
+
+nav button:hover{
+
+    background:
+
+    rgba(37,99,235,.25);
+
+}
+/* ===========================
+        RARITY COLORS
+=========================== */
+
+.common{
+
+    color:#cbd5e1;
+
+}
+
+.uncommon{
+
+    color:#22c55e;
+
+}
+
+.rare{
+
+    color:#3b82f6;
+
+}
+
+.epic{
+
+    color:#a855f7;
+
+}
+
+.legendary{
+
+    color:#f59e0b;
+
+    text-shadow:
+    0 0 12px rgba(245,158,11,.7);
+
+}
+
+.mythic{
+
+    color:#ef4444;
+
+    text-shadow:
+    0 0 18px rgba(239,68,68,.9);
+
+}
+
+/* ===========================
+        CARD GLOW
+=========================== */
+
+.legendary-glow{
+
+    box-shadow:
+
+    0 0 15px rgba(245,158,11,.5),
+
+    0 0 40px rgba(245,158,11,.25),
+
+    0 0 70px rgba(245,158,11,.15);
+
+}
+
+.mythic-glow{
+
+    box-shadow:
+
+    0 0 18px rgba(239,68,68,.65),
+
+    0 0 45px rgba(239,68,68,.35),
+
+    0 0 90px rgba(239,68,68,.18);
+
+}
+
+/* ===========================
+        INVENTORY CARD
+=========================== */
+
+.inventory-card{
+
+    width:170px;
+
+    border-radius:22px;
+
+    padding:18px;
+
+    background:
+
+    rgba(15,23,42,.78);
+
+    border:
+
+    1px solid rgba(255,255,255,.08);
+
+    backdrop-filter:blur(14px);
+
+    transition:.25s;
+
+}
+
+.inventory-card:hover{
+
+    transform:
+
+    translateY(-6px);
+
+}
+
+.inventory-card img{
+
+    width:120px;
+
+    height:120px;
+
+    object-fit:contain;
+
+    display:block;
+
+    margin:auto;
+
+}
+
+.inventory-card h3{
+
+    margin-top:15px;
+
+    text-align:center;
+
+    font-size:18px;
+
+}
+
+.inventory-card p{
+
+    text-align:center;
+
+    margin-top:6px;
+
+    color:#94a3b8;
+
+}
+
+/* ===========================
+        PROFILE
+=========================== */
+
+.profile-box{
+
+    width:92%;
+
+    max-width:520px;
+
+    padding:25px;
+
+    border-radius:28px;
+
+    background:
+
+    rgba(15,23,42,.75);
+
+    border:
+
+    1px solid rgba(255,255,255,.08);
+
+    backdrop-filter:blur(18px);
+
+}
+
+.profile-avatar{
+
+    width:110px;
+
+    height:110px;
+
+    border-radius:50%;
+
+    display:block;
+
+    margin:auto;
+
+    border:4px solid #3b82f6;
+
+}
+
+.profile-name{
+
+    text-align:center;
+
+    font-size:28px;
+
+    margin-top:18px;
+
+    font-weight:700;
+
+}
+
+.profile-stat{
+
+    margin-top:14px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    padding:12px 0;
+
+    border-bottom:
+
+    1px solid rgba(255,255,255,.05);
+
+}
+
+/* ===========================
+        ANIMATIONS
+=========================== */
+
+@keyframes pulseGlow{
+
+    0%{
+
+        transform:scale(.9);
+
+        opacity:.45;
+
+    }
+
+    50%{
+
+        transform:scale(1.12);
+
+        opacity:.95;
+
+    }
+
+    100%{
+
+        transform:scale(.9);
+
+        opacity:.45;
+
+    }
+
+}
+
+@keyframes resultAppear{
+
+    from{
+
+        opacity:0;
+
+        transform:
+
+        translateY(40px)
+
+        scale(.92);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:
+
+        translateY(0)
+
+        scale(1);
+
+    }
+
+}
+
+@keyframes legendaryPulse{
+
+    0%{
+
+        transform:scale(1);
+
+    }
+
+    50%{
+
+        transform:scale(1.04);
+
+    }
+
+    100%{
+
+        transform:scale(1);
+
+    }
+
+}
+
+.legendary-animation{
+
+    animation:
+
+    legendaryPulse
+
+    1.3s infinite;
+
+}
+/* ===========================
+        TELEGRAM SAFE AREA
+=========================== */
+
+body{
+
+    padding-bottom:110px;
+
+    -webkit-tap-highlight-color:transparent;
+
+}
+
+button{
+
+    outline:none;
+
+}
+
+img{
+
+    user-select:none;
+
+    -webkit-user-drag:none;
+
+}
+
+/* ===========================
+        SCROLLBAR
+=========================== */
+
+::-webkit-scrollbar{
+
+    width:8px;
+
+}
+
+::-webkit-scrollbar-track{
+
+    background:#0f172a;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:#334155;
+
+    border-radius:999px;
+
+}
+
+::-webkit-scrollbar-thumb:hover{
+
+    background:#475569;
+
+}
+
+/* ===========================
+        MOBILE
+=========================== */
+
+@media (max-width:480px){
+
+    header{
+
+        padding-top:25px;
+
+    }
+
+    header h1{
+
+        font-size:34px;
+
+    }
+
+    header p{
+
+        font-size:15px;
+
+    }
+
+    .case-container{
+
+        width:220px;
+
+        height:220px;
+
+    }
+
+    .case-image{
+
+        width:150px;
+
+        height:150px;
+
+    }
+
+    .open-button{
+
+        width:90%;
+
+        font-size:19px;
+
+    }
+
+    .price{
+
+        font-size:21px;
+
+    }
+
+    #resultBlock{
+
+        width:95%;
+
+    }
+
+    .result-image{
+
+        width:140px;
+
+        height:140px;
+
+    }
+
+    nav{
+
+        width:95%;
+
+        gap:8px;
+
+    }
+
+    nav button{
+
+        font-size:15px;
+
+        height:54px;
+
+    }
+
+}
+
+/* ===========================
+        LARGE SCREEN
+=========================== */
+
+@media (min-width:900px){
+
+    .case-container{
+
+        width:320px;
+
+        height:320px;
+
+    }
+
+    .case-image{
+
+        width:220px;
+
+        height:220px;
+
+    }
+
+}
+
+/* ===========================
+        FADE
+=========================== */
+
+.fade-in{
+
+    animation:fadeIn .4s ease;
+
+}
+
+.fade-out{
+
+    animation:fadeOut .4s ease;
+
+}
+
+@keyframes fadeIn{
+
+    from{
+
+        opacity:0;
+
+    }
+
+    to{
+
+        opacity:1;
+
+    }
+
+}
+
+@keyframes fadeOut{
+
+    from{
+
+        opacity:1;
+
+    }
+
+    to{
+
+        opacity:0;
+
+    }
+
+}
+
+/* ===========================
+        LOADING
+=========================== */
+
+.loading{
+
+    opacity:.65;
+
+    pointer-events:none;
+
+}
+
+/* ===========================
+        SPIN EFFECT
+=========================== */
+
+.spinning{
+
+    animation:spinScale .18s linear infinite;
+
+}
+
+@keyframes spinScale{
+
+    0%{
+
+        transform:scale(1) rotate(-2deg);
+
+    }
+
+    50%{
+
+        transform:scale(1.04) rotate(2deg);
+
+    }
+
+    100%{
+
+        transform:scale(1) rotate(-2deg);
+
+    }
+
+}
+
+/* ===========================
+        FOOTER SPACE
+=========================== */
+
+.footer-space{
+
+    height:120px;
+
+}
