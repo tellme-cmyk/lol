@@ -308,3 +308,57 @@ function getItemByName(name) {
     return gifts.find(g => g.name === name);
 
 }
+
+app.post("/upgrade", (req, res) => {
+
+    try {
+
+        const { userId, itemName, targetName } = req.body;
+
+        if (!userId || !itemName || !targetName) {
+
+            return res.status(400).json({ success: false });
+
+        }
+
+        const item = getItemByName(itemName);
+
+        const target = getItemByName(targetName);
+
+        if (!item || !target) {
+
+            return res.status(404).json({ success: false });
+
+        }
+
+        // шанс апгрейда зависит от цены
+        let chance = item.price / target.price;
+
+        if (chance > 0.9) chance = 0.9;
+        if (chance < 0.05) chance = 0.05;
+
+        const roll = Math.random();
+
+        const success = roll < chance;
+
+        res.json({
+
+            success: true,
+
+            result: success ? target : null,
+
+            successChance: chance
+
+        });
+
+    }
+
+    catch (e) {
+
+        console.log(e);
+
+        res.status(500).json({ success: false });
+
+    }
+
+});
