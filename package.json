@@ -1,16 +1,13 @@
 {
   "name": "teleloot",
   "version": "2.0.0",
-  "description": "Telegram Mini App TeleLoot",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "better-sqlite3": "^11.8.1",
-    "dotenv": "^16.4.7",
+    "better-sqlite3": "^11.10.0",
     "express": "^4.21.2",
-    "telegraf": "^4.16.3",
-    "uuid": "^11.1.0"
+    "telegraf": "^4.16.3"
   }
 }
