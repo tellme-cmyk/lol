@@ -204,6 +204,48 @@ app.post("/create-invoice", async (req, res) => {
     }
 
 });
+app.post("/create-invoice", async (req, res) => {
+
+    try {
+
+        const { userId } = req.body;
+
+        const invoiceLink = await bot.telegram.createInvoiceLink({
+
+            title: "TeleLoot",
+            description: "Открытие кейса",
+            payload: `case_${userId}_${Date.now()}`,
+            provider_token: "",
+            currency: "XTR",
+
+            prices: [
+                {
+                    label: "Кейс",
+                    amount: 99
+                }
+            ]
+
+        });
+
+        return res.json({
+            success: true,
+            invoiceLink
+        });
+
+    }
+
+    catch (e) {
+
+        console.log("invoice error:", e);
+
+        return res.status(500).json({
+            success: false
+        });
+
+    }
+
+});
+
 
 app.post("/spin-case", (req, res) => {
 
@@ -212,15 +254,10 @@ app.post("/spin-case", (req, res) => {
         const { userId } = req.body;
 
         if (!userId) {
-
             return res.json({
-
                 success: false,
-
                 error: "no_user"
-
             });
-
         }
 
         const user = ensureUser(userId);
@@ -228,69 +265,49 @@ app.post("/spin-case", (req, res) => {
         const CASE_PRICE = 99;
 
         if (user.balance < CASE_PRICE) {
-
             return res.json({
-
                 success: false,
-
                 error: "not_enough_balance"
-
             });
-
         }
 
         const win = getWeightedGift();
 
-        const balance = user.balance - CASE_PRICE + win.price;
+        const newBalance = user.balance - CASE_PRICE + win.price;
 
         db.prepare(`
             UPDATE users
             SET balance = ?
             WHERE userId = ?
-        `).run(balance, userId);
+        `).run(newBalance, userId);
 
         db.prepare(`
             INSERT INTO inventory
-            (
-                userId,
-                name,
-                rarity,
-                price,
-                image,
-                createdAt
-            )
+            (userId, name, rarity, price, image, createdAt)
             VALUES (?, ?, ?, ?, ?, ?)
         `).run(
-
             userId,
             win.name,
             win.rarity,
             win.price,
             win.image,
             Date.now()
-
         );
 
-        res.json({
-
+        return res.json({
             success: true,
-
             gift: win,
-
-            balance
-
+            balance: newBalance
         });
 
     }
 
     catch (e) {
 
-        console.log(e);
+        console.log("spin error:", e);
 
-        res.status(500).json({
-
+        return res.status(500).json({
             success: false
-
         });
 
     }
