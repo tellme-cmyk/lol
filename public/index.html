@@ -1,1 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
 
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>TeleLoot</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+</head>
+
+<body>
+
+<div class="background"></div>
+
+<header>
+
+<h1>🎁 TeleLoot</h1>
+
+<p>Открывай кейсы Telegram Gifts</p>
+
+</header>
+
+<main>
+
+<div class="case-container">
+
+<div class="case-glow"></div>
+
+<img
+id="giftImage"
+class="case-image"
+src="/assets/case.webp"
+alt="Case">
+
+</div>
+
+<div class="case-info">
+
+<h2 id="giftName">
+
+Кейс TeleLoot
+
+</h2>
+
+<div class="price">
+
+⭐ 99 Stars
+
+</div>
+
+</div>
+
+<button
+id="openButton"
+class="open-button">
+
+🎰 Открыть кейс
+
+</button>
+
+<div id="resultBlock" class="hidden">
+
+<h2>
+
+Поздравляем!
+
+</h2>
+
+<img
+id="resultImage"
+class="result-image"
+src="">
+
+<h3 id="resultName"></h3>
+
+<p id="resultRarity"></p>
+
+<button
+id="againButton">
+
+Открыть ещё
+
+</button>
+
+</div>
+
+</main>
+
+<nav>
+
+<button id="inventoryBtn">
+
+🎒 Инвентарь
+
+</button>
+
+<button id="upgradeBtn">
+
+💎 Апгрейд
+
+</button>
+
+<button id="profileBtn">
+
+👤 Профиль
+
+</button>
+
+</nav>
+
+<script src="script.js"></script>
+
+</body>
+
+</html>
