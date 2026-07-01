@@ -1,492 +1,223 @@
-const Database = require("better-sqlite3");
-
-const db = new Database("teleloot.db");
-/* ===========================
-   INIT DB
-=========================== */
-
-db.prepare(`
-CREATE TABLE IF NOT EXISTS inventory (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    userId TEXT,
-    name TEXT,
-    rarity TEXT,
-    price INTEGER,
-    image TEXT,
-    createdAt INTEGER
-)
-`).run();
-db.prepare(`
-CREATE TABLE IF NOT EXISTS users (
-    userId TEXT PRIMARY KEY,
-    balance INTEGER DEFAULT 0
-)
-`).run();
-function ensureUser(userId) {
-
-    const user = db.prepare(`
-        SELECT * FROM users WHERE userId = ?
-    `).get(userId);
-
-    if (!user) {
-
-        db.prepare(`
-            INSERT INTO users (userId, balance)
-            VALUES (?, 1000)
-        `).run(userId);
-
-        return { userId, balance: 1000 };
-    }
-
-    return user;
-}
-
-
 const express = require("express");
 const { Telegraf } = require("telegraf");
+const Database = require("better-sqlite3");
 const path = require("path");
 
 const app = express();
 
+const PORT = process.env.PORT || 3000;
+
 const BOT_TOKEN = process.env.BOT_TOKEN;
 
 if (!BOT_TOKEN) {
-    console.log("BOT_TOKEN отсутствует");
-    process.exit();
+    console.error("BOT_TOKEN отсутствует");
+    process.exit(1);
 }
 
 const bot = new Telegraf(BOT_TOKEN);
 
+const db = new Database("teleloot.db");
+
 app.use(express.json());
 
 app.use(express.static(path.join(__dirname, "public")));
-
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public/index.html"));
 });
+db.exec(`
 
-bot.start(async (ctx) => {
+CREATE TABLE IF NOT EXISTS users (
 
-    const appUrl = process.env.RAILWAY_PUBLIC_DOMAIN
-        ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
-        : "https://railway.app";
+    userId TEXT PRIMARY KEY,
 
-    await ctx.reply("🎁 Добро пожаловать в TeleLoot!", {
-        reply_markup: {
-            inline_keyboard: [
-                [
-                    {
-                        text: "🎰 Открыть TeleLoot",
-                        web_app: {
-                            url: appUrl
-                        }
-                    }
-                ]
-            ]
-        }
-    });
+    balance INTEGER DEFAULT 1000
 
-});
+);
 
-bot.on("pre_checkout_query", async (ctx) => {
+CREATE TABLE IF NOT EXISTS inventory (
 
-    await ctx.answerPreCheckoutQuery(true);
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-});
+    userId TEXT,
 
-app.post("/create-invoice", async (req, res) => {
+    name TEXT,
 
-    try {
+    rarity TEXT,
 
-        const { userId } = req.body;
+    price INTEGER,
 
-        const invoiceLink = await bot.telegram.createInvoiceLink({
+    image TEXT,
 
-            title: "TeleLoot",
+    createdAt INTEGER
 
-            description: "Открытие кейса",
+);
 
-            payload: `case_${userId}_${Date.now()}`,
+CREATE TABLE IF NOT EXISTS payments (
 
-            provider_token: "",
+    payload TEXT PRIMARY KEY,
 
-            currency: "XTR",
+    userId TEXT,
 
-            prices: [
+    paid INTEGER DEFAULT 0,
 
-                {
-                    label: "Кейс",
-                    amount: 99
-                }
+    used INTEGER DEFAULT 0,
 
-            ]
+    createdAt INTEGER
 
-        });
+);
 
-        res.json({
+`);
+function ensureUser(userId){
 
-            success: true,
+    let user=db.prepare(`
+        SELECT *
+        FROM users
+        WHERE userId=?
+    `).get(userId);
 
-            invoiceLink
+    if(!user){
 
-        });
+        db.prepare(`
+            INSERT INTO users(userId,balance)
+            VALUES(?,1000)
+        `).run(userId);
+
+        user={
+            userId,
+            balance:1000
+        };
 
     }
+
+    return user;
+
+}
+function createPayment(payload,userId){
+
+    db.prepare(`
+        INSERT INTO payments
+        (payload,userId,createdAt)
+        VALUES(?,?,?)
+    `).run(
+        payload,
+        userId,
+        Date.now()
+    );
+
+}
+
+function markPaymentPaid(payload){
+
+    db.prepare(`
+        UPDATE payments
+        SET paid=1
+        WHERE payload=?
+    `).run(payload);
+
+}
+
+function consumePayment(payload){
+
+    db.prepare(`
+        UPDATE payments
+        SET used=1
+        WHERE payload=?
+    `).run(payload);
+
+}
+
+function getPayment(payload){
+
+    return db.prepare(`
+        SELECT *
+        FROM payments
+        WHERE payload=?
+    `).get(payload);
+
+}
 /* ===========================
-   SPIN CASE ENDPOINT
+   TELEGRAM STARS PAYMENT
 =========================== */
 
-app.post("/spin-case", (req, res) => {
-
+bot.on("pre_checkout_query", async (ctx) => {
     try {
-
-        const { userId } = req.body;
-
-        if (!userId) {
-
-            return res.json({
-                success: false,
-                error: "no_user"
-app.post("/create-invoice", async (req, res) => {
-
-    try {
-
-        const { userId } = req.body;
-
-        const invoiceLink = await bot.telegram.createInvoiceLink({
-
-            title: "TeleLoot",
-
-            description: "Открытие кейса",
-
-            payload: `case_${userId}_${Date.now()}`,
-
-            provider_token: "",
-
-            currency: "XTR",
-
-            prices: [
-
-                {
-
-                    label: "Кейс",
-
-                    amount: 99
-
-                }
-
-            ]
-
-        });
-
-        res.json({
-
-            success: true,
-
-            invoiceLink
-
-        });
-
+        await ctx.answerPreCheckoutQuery(true);
+    } catch (err) {
+        console.error(err);
     }
-
-    catch (e) {
-
-        console.log(e);
-
-        res.status(500).json({
-
-            success: false
-
-        });
-
-    }
-
-});
-app.post("/create-invoice", async (req, res) => {
-
-    try {
-
-        const { userId } = req.body;
-
-        const invoiceLink = await bot.telegram.createInvoiceLink({
-
-            title: "TeleLoot",
-            description: "Открытие кейса",
-            payload: `case_${userId}_${Date.now()}`,
-            provider_token: "",
-            currency: "XTR",
-
-            prices: [
-                {
-                    label: "Кейс",
-                    amount: 99
-                }
-            ]
-
-        });
-
-        return res.json({
-            success: true,
-            invoiceLink
-        });
-
-    }
-
-    catch (e) {
-
-        console.log("invoice error:", e);
-
-        return res.status(500).json({
-            success: false
-        });
-
-    }
-
 });
 
-
-app.post("/spin-case", (req, res) => {
-
+bot.on("successful_payment", async (ctx) => {
     try {
+        const userId = String(ctx.from.id);
 
-        const { userId } = req.body;
-
-        if (!userId) {
-            return res.json({
-                success: false,
-                error: "no_user"
-            });
-        }
-
-        const user = ensureUser(userId);
+        ensureUser(userId);
 
         const CASE_PRICE = 99;
 
-        if (user.balance < CASE_PRICE) {
-            return res.json({
-                success: false,
-                error: "not_enough_balance"
-            });
-        }
-
-        const win = getWeightedGift();
-
-        const newBalance = user.balance - CASE_PRICE + win.price;
-
         db.prepare(`
             UPDATE users
-            SET balance = ?
+            SET balance = balance + ?
             WHERE userId = ?
-        `).run(newBalance, userId);
+        `).run(CASE_PRICE, userId);
 
-        db.prepare(`
-            INSERT INTO inventory
-            (userId, name, rarity, price, image, createdAt)
-            VALUES (?, ?, ?, ?, ?, ?)
-        `).run(
-            userId,
-            win.name,
-            win.rarity,
-            win.price,
-            win.image,
-            Date.now()
+        await ctx.reply(
+            `⭐ Оплата прошла успешно!\n\nНа ваш баланс начислено ${CASE_PRICE} Stars.`
         );
 
-        return res.json({
-            success: true,
-            gift: win,
-            balance: newBalance
-        });
-
+    } catch (err) {
+        console.error("successful_payment:", err);
     }
-
-    catch (e) {
-
-        console.log("spin error:", e);
-
-        return res.status(500).json({
-            success: false
-        });
-
-    }
-
 });
 
-app.listen(PORT, () => {
-
-    console.log(`Server started on ${PORT}`);
-
-});
-
-bot.launch();
-
-/* ===========================
-   CASE CONFIG (SERVER SIDE)
-=========================== */
-
-const gifts = [
-
-{
-    id: 1,
-    name: "Scared Cat",
-    rarity: "epic",
-    price: 980,
-    image: "/assets/RVFBVHVVR2R2cmpMdlRXRTVwcFZGT1ZDcVUyZGxDTFVuS1RzdTBuMUpZbTlsYTEw.webp",
-    weight: 20
-},
-
-{
-    id: 2,
-    name: "Precious Peach",
-    rarity: "rare",
-    price: 1200,
-    image: "/assets/RVFBNGk1OGl1UzlEVVlSdFVaOTdzWm81bW5rYmlZVUJwV1hRT2UzZEVVQ2NQMVc4.webp",
-    weight: 25
-},
-
-{
-    id: 3,
-    name: "Artisan Brick",
-    rarity: "uncommon",
-    price: 450,
-    image: "/assets/RVFBMlJJN1h2SXM5d0pRS3J4a1RiN1l0cGVVdWFELXAwZVQ1dUJlNGJrY0dUMmJk.webp",
-    weight: 35
-},
-
-{
-    id: 4,
-    name: "Vintage Cigar",
-    rarity: "rare",
-    price: 750,
-    image: "/assets/RVFBQ2NRcFIyZm1kZUVOV2RFMllHUVdIVnhTVHlBOFpxNF9rN3JrX0lheENSWE5l.webp",
-    weight: 15
-},
-
-{
-    id: 5,
-    name: "Snoop Cigar",
-    rarity: "legendary",
-    price: 2400,
-    image: "/assets/RVFBNzJVZXZyX01IdnpZd1NDSEpVSy11QzZrZC13OGtieHpoSjQ5V0lpRy1vNkNE.webp",
-    weight: 5
-}
-
-];
-
-/* ===========================
-   WEIGHTED RANDOM (SERVER)
-=========================== */
-
-function getWeightedGift() {
-
-    const pool = [];
-
-    for (const gift of gifts) {
-
-        for (let i = 0; i < gift.weight; i++) {
-
-            pool.push(gift);
-
-        }
-
-    }
-
-    return pool[Math.floor(Math.random() * pool.length)];
-
-}
-
-app.post("/inventory", (req, res) => {
+app.post("/create-invoice", async (req, res) => {
 
     try {
 
         const { userId } = req.body;
 
-        const items = db.prepare(`
-            SELECT * FROM inventory
-            WHERE userId = ?
-            ORDER BY id DESC
-        `).all(userId);
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                error: "no_user"
+            });
+        }
 
-        res.json({
-            success: true,
-            items
+        const invoiceLink = await bot.telegram.createInvoiceLink({
+
+            title: "TeleLoot Case",
+
+            description: "Пополнение баланса на 99 Stars",
+
+            payload: `stars_${userId}_${Date.now()}`,
+
+            provider_token: "",
+
+            currency: "XTR",
+
+            prices: [
+                {
+                    label: "99 Stars",
+                    amount: 99
+                }
+            ]
+
         });
 
-    }
+        return res.json({
+            success: true,
+            invoiceLink
+        });
 
-    catch (e) {
+    } catch (err) {
 
-        console.log(e);
+        console.error("createInvoice:", err);
 
-        res.status(500).json({
+        return res.status(500).json({
             success: false
         });
-
-    }
-
-});
-
-/* ===========================
-   UPGRADE SYSTEM (SERVER)
-=========================== */
-
-function getItemByName(name) {
-
-    return gifts.find(g => g.name === name);
-
-}
-
-app.post("/upgrade", (req, res) => {
-
-    try {
-
-        const { userId, itemName, targetName } = req.body;
-
-        if (!userId || !itemName || !targetName) {
-
-            return res.status(400).json({ success: false });
-
-        }
-
-        const item = getItemByName(itemName);
-
-        const target = getItemByName(targetName);
-
-        if (!item || !target) {
-
-            return res.status(404).json({ success: false });
-
-        }
-
-        // шанс апгрейда зависит от цены
-        let chance = item.price / target.price;
-
-        if (chance > 0.9) chance = 0.9;
-        if (chance < 0.05) chance = 0.05;
-
-        const roll = Math.random();
-
-        const success = roll < chance;
-
-        res.json({
-
-            success: true,
-
-            result: success ? target : null,
-
-            successChance: chance
-
-        });
-
-    }
-
-    catch (e) {
-
-        console.log(e);
-
-        res.status(500).json({ success: false });
 
     }
 
