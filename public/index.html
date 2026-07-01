@@ -5,7 +5,8 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+content="width=device-width,initial-scale=1">
 
 <title>TeleLoot</title>
 
@@ -23,31 +24,29 @@
 
 <h1>🎁 TeleLoot</h1>
 
-<p>Открывай кейсы Telegram Gifts</p>
+<p>
+Открывай настоящие Telegram Gifts
+</p>
 
 </header>
 
 <main>
 
-<div class="case-container">
+<div class="case-box">
 
-<div class="case-glow"></div>
+<div class="case-top">
 
 <img
-id="giftImage"
+
+id="caseImage"
+
 class="case-image"
+
 src="/assets/case.webp"
-alt="Case">
+
+>
 
 </div>
-
-<div class="case-info">
-
-<h2 id="giftName">
-
-Кейс TeleLoot
-
-</h2>
 
 <div class="price">
 
@@ -55,34 +54,66 @@ alt="Case">
 
 </div>
 
-</div>
-
 <button
+
 id="openButton"
+
 class="open-button">
 
-🎰 Открыть кейс
+ОТКРЫТЬ КЕЙС
 
 </button>
 
-<div id="resultBlock" class="hidden">
+</div>
 
-<h2>
+<div class="roulette-wrapper">
 
-Поздравляем!
+<div class="roulette-arrow">
 
-</h2>
+▼
+
+</div>
+
+<div
+
+id="roulette"
+
+class="roulette">
+
+<div
+
+id="rouletteTrack"
+
+class="roulette-track">
+
+</div>
+
+</div>
+
+</div>
+
+<div
+
+id="winCard"
+
+class="hidden">
 
 <img
-id="resultImage"
+
+id="winImage"
+
 class="result-image"
-src="">
 
-<h3 id="resultName"></h3>
+>
 
-<p id="resultRarity"></p>
+<h2 id="winName"></h2>
+
+<p id="winPrice"></p>
+
+<p id="winRarity"></p>
 
 <button
+
 id="againButton">
 
 Открыть ещё
@@ -97,19 +128,31 @@ id="againButton">
 
 <button id="inventoryBtn">
 
-🎒 Инвентарь
+🎒
+
+<br>
+
+Инвентарь
 
 </button>
 
 <button id="upgradeBtn">
 
-💎 Апгрейд
+💎
+
+<br>
+
+Апгрейд
 
 </button>
 
 <button id="profileBtn">
 
-👤 Профиль
+👤
+
+<br>
+
+Профиль
 
 </button>
 
