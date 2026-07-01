@@ -317,7 +317,12 @@ function finishSpin(gift) {
     }
 
     winCard.classList.remove("hidden");
+if (data.balance !== undefined) {
 
+    // можно позже вывести UI
+    console.log("Balance:", data.balance);
+
+}
 }
 function showWin(gift) {
 
