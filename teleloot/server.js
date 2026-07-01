@@ -116,3 +116,78 @@ app.listen(PORT, () => {
 });
 
 bot.launch();
+
+/* ===========================
+   CASE CONFIG (SERVER SIDE)
+=========================== */
+
+const gifts = [
+
+{
+    id: 1,
+    name: "Scared Cat",
+    rarity: "epic",
+    price: 980,
+    image: "/assets/RVFBVHVVR2R2cmpMdlRXRTVwcFZGT1ZDcVUyZGxDTFVuS1RzdTBuMUpZbTlsYTEw.webp",
+    weight: 20
+},
+
+{
+    id: 2,
+    name: "Precious Peach",
+    rarity: "rare",
+    price: 1200,
+    image: "/assets/RVFBNGk1OGl1UzlEVVlSdFVaOTdzWm81bW5rYmlZVUJwV1hRT2UzZEVVQ2NQMVc4.webp",
+    weight: 25
+},
+
+{
+    id: 3,
+    name: "Artisan Brick",
+    rarity: "uncommon",
+    price: 450,
+    image: "/assets/RVFBMlJJN1h2SXM5d0pRS3J4a1RiN1l0cGVVdWFELXAwZVQ1dUJlNGJrY0dUMmJk.webp",
+    weight: 35
+},
+
+{
+    id: 4,
+    name: "Vintage Cigar",
+    rarity: "rare",
+    price: 750,
+    image: "/assets/RVFBQ2NRcFIyZm1kZUVOV2RFMllHUVdIVnhTVHlBOFpxNF9rN3JrX0lheENSWE5l.webp",
+    weight: 15
+},
+
+{
+    id: 5,
+    name: "Snoop Cigar",
+    rarity: "legendary",
+    price: 2400,
+    image: "/assets/RVFBNzJVZXZyX01IdnpZd1NDSEpVSy11QzZrZC13OGtieHpoSjQ5V0lpRy1vNkNE.webp",
+    weight: 5
+}
+
+];
+
+/* ===========================
+   WEIGHTED RANDOM (SERVER)
+=========================== */
+
+function getWeightedGift() {
+
+    const pool = [];
+
+    for (const gift of gifts) {
+
+        for (let i = 0; i < gift.weight; i++) {
+
+            pool.push(gift);
+
+        }
+
+    }
+
+    return pool[Math.floor(Math.random() * pool.length)];
+
+}
