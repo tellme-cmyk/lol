@@ -92,7 +92,53 @@ app.post("/create-invoice", async (req, res) => {
         });
 
     }
+/* ===========================
+   SPIN CASE ENDPOINT
+=========================== */
 
+app.post("/spin-case", (req, res) => {
+
+    try {
+
+        const { userId } = req.body;
+
+        if (!userId) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                error: "no userId"
+
+            });
+
+        }
+
+        const win = getWeightedGift();
+
+        res.json({
+
+            success: true,
+
+            gift: win
+
+        });
+
+    }
+
+    catch (e) {
+
+        console.log("spin error:", e);
+
+        res.status(500).json({
+
+            success: false
+
+        });
+
+    }
+
+});
     catch (e) {
 
         console.log(e);
