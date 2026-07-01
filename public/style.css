@@ -1161,3 +1161,102 @@ img{
     height:120px;
 
 }
+/* ===========================
+        INVENTORY UI
+=========================== */
+
+.inventory{
+
+    width:92%;
+
+    max-width:900px;
+
+    margin:30px auto;
+
+    text-align:center;
+
+}
+
+.inventory-title{
+
+    font-size:28px;
+
+    margin-bottom:20px;
+
+}
+
+.inventory-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+
+    gap:12px;
+
+    padding-bottom:120px;
+
+}
+
+.inv-card{
+
+    background:rgba(15,23,42,.75);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    border-radius:18px;
+
+    padding:12px;
+
+    backdrop-filter:blur(12px);
+
+    transition:.2s;
+
+}
+
+.inv-card:hover{
+
+    transform:translateY(-5px);
+
+}
+
+.inv-card img{
+
+    width:90px;
+
+    height:90px;
+
+    object-fit:contain;
+
+    margin:auto;
+
+    display:block;
+
+}
+
+.inv-name{
+
+    margin-top:10px;
+
+    font-size:14px;
+
+    font-weight:600;
+
+}
+
+.inv-price{
+
+    margin-top:5px;
+
+    font-size:13px;
+
+    color:#94a3b8;
+
+}
+
+.inv-rarity{
+
+    margin-top:6px;
+
+    font-size:12px;
+
+}
